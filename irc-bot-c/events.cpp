@@ -1,8 +1,6 @@
 #include "events.h"
 
 void event_join(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count) {
-    irc_ctx_t * ctx = (irc_ctx_t *)irc_get_ctx(session);
-
     if (!origin) {
         return;
     }
