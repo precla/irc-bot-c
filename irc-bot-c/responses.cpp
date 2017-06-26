@@ -67,9 +67,6 @@ int check_regex(UChar *str, static UChar *pattern[], unsigned int numPatterns) {
     OnigErrorInfo einfo;
     OnigRegion *region;
 
-    // static UChar* pattern = (UChar*)"(https?(:\/\/))?(www.)?youtu(be|.be)?(.com)?\/(watch\?v=)?(\S+)";
-    // static UChar *pattern[] = { (UChar*)"youtube", (UChar*)"imgur", (UChar*)"twitter" };
-
     OnigEncoding use_encs[] = { ONIG_ENCODING_UTF8 };
     onig_initialize(use_encs, sizeof(use_encs) / sizeof(use_encs[0]));
 
