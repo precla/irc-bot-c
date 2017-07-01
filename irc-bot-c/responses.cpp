@@ -37,7 +37,7 @@ char *check_message_for_url(const char *inputUrl) {
 
     unsigned int numberOfPatterns = (sizeof(httpPattern) / sizeof(char*));
 
-    if (check_regex((UChar *)inputUrl, httpPattern, numberOfPatterns)) {
+    if (check_regex((UChar *)inputUrl, httpPattern, &numberOfPatterns)) {
         // no URL, abandon ship
         return NULL;
     }
@@ -51,17 +51,20 @@ char *check_message_for_url(const char *inputUrl) {
 
     numberOfPatterns = (sizeof(domains) / sizeof(char*));
 
-    if (check_regex((UChar *)inputUrl, domains, numberOfPatterns)) {
-        // no domain match, abandon boatu
+    if (check_regex((UChar *)inputUrl, domains, &numberOfPatterns)) {
+        // no domain match, abandon boat
         return NULL;
     }
 
-    char *cRegexValue = grab_url_data(inputUrl);
+    // numberOfPatterns holds the index of the matched pattern
+    unsigned int matchedUrlIndex = numberOfPatterns;
+
+    char *cRegexValue = grab_url_data(inputUrl, &matchedUrlIndex);
 
     return cRegexValue;
 }
 
-int check_regex(UChar *str, static UChar *pattern[], unsigned int numPatterns) {
+int check_regex(UChar *str, static UChar *pattern[], unsigned int *numPatterns) {
     // use 'r' as the onig_new return value, but also as the return value of check_regex()
     int r;
     unsigned char *start, *range, *end;
@@ -72,7 +75,7 @@ int check_regex(UChar *str, static UChar *pattern[], unsigned int numPatterns) {
     OnigEncoding use_encs[] = { ONIG_ENCODING_UTF8 };
     onig_initialize(use_encs, sizeof(use_encs) / sizeof(use_encs[0]));
 
-    for (unsigned int i = 0; i < numPatterns; i++) {
+    for (unsigned int i = 0; i < *numPatterns; i++) {
 
         UChar* checkPattern = pattern[i];
 
@@ -100,7 +103,9 @@ int check_regex(UChar *str, static UChar *pattern[], unsigned int numPatterns) {
                 fprintf(stderr, "%d: (%d-%d)\n", j, region->beg[j], region->end[j]);
             }
             // Matched! stop the loop because no need to check for the rest of the patterns
+            // set numPatterns to the index of the matched pattern for additional stuff (search: FIND_RATING)
             // return 0 as success
+            *numPatterns = i;
             r = 0;
             break;
         }
@@ -112,7 +117,7 @@ int check_regex(UChar *str, static UChar *pattern[], unsigned int numPatterns) {
     return r;
 }
 
-char *grab_url_data(const char *url) {
+char *grab_url_data(const char *url, unsigned int *matchedUrlIndex) {
     CURL *curl = curl_easy_init();
     char *title = NULL;
 
@@ -138,7 +143,7 @@ char *grab_url_data(const char *url) {
         fprintf(stderr, "Curl success with - %s\n", url);
 
         // send the data to find_title_tag() to find the title of the url
-        title = find_title_tag(response.ptr);
+        title = find_title_tag(response.ptr, *matchedUrlIndex);
 
         // clean up data that won't be needed anymore
         free(response.ptr);
@@ -151,11 +156,13 @@ char *grab_url_data(const char *url) {
     return title;
 }
 
-char *find_title_tag(char *htmlData) {
+char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
     
     static UChar *pattern[] = { (UChar*)"<title>", (UChar*)"<\/title>" };
 
-    if (check_regex((UChar *)htmlData, pattern, TITLE_TAGS)) {
+    unsigned int tt = TITLE_TAGS;
+
+    if (check_regex((UChar *)htmlData, pattern, &tt)) {
         fprintf(stderr, "No title tag found");
         return NULL;
     }
@@ -165,9 +172,25 @@ char *find_title_tag(char *htmlData) {
     start = start + TITLE_TAG_LENGTH;
     char *end = strstr(htmlData, "<\/title>");
 
-    char *title = (char *)calloc(255, sizeof(char));
+    char *title = (char *)calloc(512, sizeof(char));
 
-    strncpy(title, start, (size_t)(end - start));
+    strncpy(title, start, (size_t)(end - start) % 256);
+
+    // see 'enum domains_i' to check what index is for what url in 'matchedUrlIndex'
+    // FIND_RATING - find rating if the link was a imdb/yt link
+    if (matchedUrlIndex == Imdb) {
+        // <strong title="7.7 based on 11,037 user ratings"><span itemprop="ratingValue">
+        start = strstr(htmlData, "<strong title=\"");
+        start = start + strlen("<strong title=\"");
+        end = strstr(htmlData, "\"><span itemprop=\"ratingValue\">");
+
+        char *rating = (char *)calloc(256, sizeof(char));
+        strncpy(rating, start, (size_t)(end - start) % 256);
+
+        strncat(title, " - ", 3);
+
+        strncat(title, rating, 253);
+    }
 
     return title;
 }

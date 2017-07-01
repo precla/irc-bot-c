@@ -16,6 +16,13 @@
 
 #include "structs.h"
 
+enum domains_i {
+    Youtube,
+    Imgur,
+    Twitter,
+    Imdb
+};
+
 // initialize the string
 void init_string_s(string_c *);
 
@@ -27,10 +34,10 @@ size_t write_response(void *, size_t, size_t, string_c *);
 char *check_message_for_url(const char *);
 
 // check_regex - returns 0 if the regexpression matched, if no match than it returns 1
-int check_regex(UChar *, static UChar *[], unsigned int);
+int check_regex(UChar *, static UChar *[], unsigned int *);
 
 // get the data from the URL
-char *grab_url_data(const char *);
+char *grab_url_data(const char *, unsigned int *);
 
 // find the <title> tag, extract the title and return it
-char *find_title_tag(char *);
+char *find_title_tag(char *, unsigned int);
