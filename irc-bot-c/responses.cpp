@@ -45,7 +45,9 @@ char *check_message_for_url(const char *inputUrl) {
     // it's an URL, continue
     static UChar *domains[] = { (UChar*)"https?:\/\/(www.)?youtu(be|.be)?(.com)?\/(watch\?v=)?(\\S+)",
                                 (UChar*)"https?:\/\/(i.imgur|imgur).com\/(\\S+)",
-                                (UChar*)"https?:\/\/twitter.com\/\\w*(\/status\/\\d*)?" };
+                                (UChar*)"https?:\/\/twitter.com\/\\w*(\/status\/\\d*)?",
+                                (UChar*)"https?:\/\/(www.)?imdb.com\/(title\/\\S+)",
+                                };
 
     numberOfPatterns = (sizeof(domains) / sizeof(char*));
 
