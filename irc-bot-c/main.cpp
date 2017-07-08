@@ -18,14 +18,17 @@
 #include "responses.h"
 #include "structs.h"
 
+#define MAXLENGTH 128
+
+// global variable with settings
+user_config ucfg;
+
 int main(int argc, char **argv) {
     irc_callbacks_t	callbacks;
-    irc_ctx_t ctx;
     irc_session_t * s;
-    unsigned short port = 6667;
 
-    if (argc != 4) {
-        printf("Usage: %s <server> <nick> <channel>\n", argv[0]);
+    if (argc != 2) {
+        printf("Usage: %s server.cfg\n", argv[0]);
         return 1;
     }
 
@@ -37,11 +40,46 @@ int main(int argc, char **argv) {
     callbacks.event_join = event_join;
     callbacks.event_numeric = event_numeric;
     callbacks.event_channel = event_channel;
+    callbacks.event_notice = event_notice;
+    callbacks.event_privmsg = event_privmsg;
 
-    ctx.channel = argv[3];
-    ctx.nick = argv[2];
+    // open cfg file
+    FILE *f = fopen(argv[1], "r");
+    if (!f) {
+        printf("Could not open %s\n", argv[1]);
+        return 1;
+    }
 
-    // And create the IRC session; 0 means error
+    char *checkCfgParameter = (char *)calloc(MAXLENGTH, sizeof(char *));
+    ucfg.botNick = (char *)calloc(MAXLENGTH, sizeof(char *));
+    ucfg.server = (char *)calloc(MAXLENGTH, sizeof(char *));
+    ucfg.channel = (char *)calloc(MAXLENGTH, sizeof(char *));
+    ucfg.nickservPassword = (char *)calloc(MAXLENGTH, sizeof(char *));
+
+    while (!feof(f)) {
+        fscanf(f, "%s", checkCfgParameter);
+
+        if (!strcmp(checkCfgParameter, "bot_nick")) {
+            fscanf(f, " %s", ucfg.botNick);
+
+        } else if (!strcmp(checkCfgParameter, "server")) {
+            fscanf(f, " %s", ucfg.server);
+
+        } else if (!strcmp(checkCfgParameter, "port")) {
+            fscanf(f, " %d", &ucfg.port);
+
+        } else if (!strcmp(checkCfgParameter, "channel")) {
+            fscanf(f, " %s", ucfg.channel);
+
+        } else if (!strcmp(checkCfgParameter, "ssl")) {
+            fscanf(f, " %s", ucfg.sslActivated);
+
+        } else if (!strcmp(checkCfgParameter, "nickserv_auth")) {
+            fscanf(f, " %s", ucfg.nickservPassword);
+        }
+    }
+    
+    // create the IRC session; 0 means error
     s = irc_create_session(&callbacks);
 
     if (!s) {
@@ -49,25 +87,19 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    irc_set_ctx(s, &ctx);
+    irc_set_ctx(s, &ucfg);
     irc_option_set(s, LIBIRC_OPTION_STRIPNICKS);
 
-    // If the port number is specified in the server string, use the port 0 so it gets parsed
-    if (strchr(argv[1], ':') != 0) {
-        port = 0;
-    }
-
-    // To handle the "SSL certificate verify failed" from command line we allow passing ## in front 
-    // of the server name, and in this case tell libircclient not to verify the cert
-    if (argv[1][0] == '#' && argv[1][1] == '#') {
-        // Skip the first character as libircclient needs only one # for SSL support, i.e. #irc.freenode.net
-        argv[1]++;
-
-        irc_option_set(s, LIBIRC_OPTION_SSL_NO_VERIFY);
+    if (ucfg.sslActivated[0] == 'y') {
+        // To handle the "SSL certificate verify failed" from command line we allow passing ## in front 
+        // of the server name, and in this case tell libircclient not to verify the cert
+        if (ucfg.sslActivated[2] != 'v') {
+            irc_option_set(s, LIBIRC_OPTION_SSL_NO_VERIFY);
+        }
     }
 
     // Initiate the IRC server connection
-    if (irc_connect(s, argv[1], port, 0, argv[2], 0, 0)) {
+    if (irc_connect(s, ucfg.server, ucfg.port, 0, ucfg.botNick, 0, 0)) {
         printf("Could not connect: %s\n", irc_strerror(irc_errno(s)));
         return 1;
     }
