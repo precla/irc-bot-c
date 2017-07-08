@@ -10,6 +10,8 @@ irc-bot-c is a simple IRC bot with basic functionalities, same as my irc-bot-nod
 
 ### Done:
 - URL parser for: Imgur, Twitter, Youtube
+- Nickserv authentication
+- support for config file
 
 ## Dependencies:
 - libcurl: https://curl.haxx.se/libcurl/
