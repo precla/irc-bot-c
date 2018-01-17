@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
             fscanf(f, " %s", ucfg.server);
 
         } else if (!strcmp(checkCfgParameter, "port")) {
-            fscanf(f, " %d", &ucfg.port);
+            fscanf(f, " %hu", &ucfg.port);
 
         } else if (!strcmp(checkCfgParameter, "channel")) {
             fscanf(f, " %s", ucfg.channel);
