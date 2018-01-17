@@ -57,25 +57,25 @@ int main(int argc, char **argv) {
     ucfg.nickservPassword = (char *)calloc(MAXLENGTH, sizeof(char *));
 
     while (!feof(f)) {
-        fscanf(f, "%s", checkCfgParameter);
+        fscanf(f, "%96s", checkCfgParameter);
 
         if (!strcmp(checkCfgParameter, "bot_nick")) {
-            fscanf(f, " %s", ucfg.botNick);
+            fscanf(f, " %96s", ucfg.botNick);
 
         } else if (!strcmp(checkCfgParameter, "server")) {
-            fscanf(f, " %s", ucfg.server);
+            fscanf(f, " %96s", ucfg.server);
 
         } else if (!strcmp(checkCfgParameter, "port")) {
             fscanf(f, " %hu", &ucfg.port);
 
         } else if (!strcmp(checkCfgParameter, "channel")) {
-            fscanf(f, " %s", ucfg.channel);
+            fscanf(f, " %96s", ucfg.channel);
 
         } else if (!strcmp(checkCfgParameter, "ssl")) {
-            fscanf(f, " %s", ucfg.sslActivated);
+            fscanf(f, " %96s", ucfg.sslActivated);
 
         } else if (!strcmp(checkCfgParameter, "nickserv_auth")) {
-            fscanf(f, " %s", ucfg.nickservPassword);
+            fscanf(f, " %96s", ucfg.nickservPassword);
         }
     }
     
