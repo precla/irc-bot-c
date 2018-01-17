@@ -190,6 +190,7 @@ char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
         strncat(title, " - ", 3);
 
         strncat(title, rating, 253);
+        free(rating);
     }
 
     return title;

@@ -84,6 +84,8 @@ int main(int argc, char **argv) {
 
     if (!s) {
         printf("Could not create IRC session\n");
+        fclose(f);
+        free(checkCfgParameter);
         return 1;
     }
 
@@ -101,14 +103,20 @@ int main(int argc, char **argv) {
     // Initiate the IRC server connection
     if (irc_connect(s, ucfg.server, ucfg.port, 0, ucfg.botNick, 0, 0)) {
         printf("Could not connect: %s\n", irc_strerror(irc_errno(s)));
+        fclose(f);
+        free(checkCfgParameter);
         return 1;
     }
 
     // and run into forever loop, generating events
     if (irc_run(s)) {
         printf("Could not connect or I/O error: %s\n", irc_strerror(irc_errno(s)));
+        fclose(f);
+        free(checkCfgParameter);
         return 1;
     }
 
+    free(checkCfgParameter);
+    fclose(f);
     return 1;
 }
