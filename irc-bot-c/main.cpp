@@ -50,11 +50,11 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    char *checkCfgParameter = (char *)calloc(MAXLENGTH, sizeof(char *));
-    ucfg.botNick = (char *)calloc(MAXLENGTH, sizeof(char *));
-    ucfg.server = (char *)calloc(MAXLENGTH, sizeof(char *));
-    ucfg.channel = (char *)calloc(MAXLENGTH, sizeof(char *));
-    ucfg.nickservPassword = (char *)calloc(MAXLENGTH, sizeof(char *));
+    char *checkCfgParameter = (char *)calloc(MAXLENGTH, sizeof(char));
+    ucfg.botNick = (char *)calloc(MAXLENGTH, sizeof(char));
+    ucfg.server = (char *)calloc(MAXLENGTH, sizeof(char));
+    ucfg.channel = (char *)calloc(MAXLENGTH, sizeof(char));
+    ucfg.nickservPassword = (char *)calloc(MAXLENGTH, sizeof(char));
 
     while (!feof(f)) {
         fscanf(f, "%96s", checkCfgParameter);
