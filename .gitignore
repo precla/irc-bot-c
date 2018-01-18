@@ -3,9 +3,9 @@
 
 # user-specific folders
 irc-bot-c/Debug/
-server.cfg
 
 # User-specific files
+server.cfg
 *.suo
 *.user
 *.userosscache
