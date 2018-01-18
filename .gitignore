@@ -6,6 +6,7 @@ irc-bot-c/Debug/
 
 # User-specific files
 server.cfg
+irc-bot-c/*.vcxproj*
 *.suo
 *.user
 *.userosscache
