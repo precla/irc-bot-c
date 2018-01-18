@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     if (ucfg.sslActivated[0] == 'y') {
         // To handle the "SSL certificate verify failed" from command line we allow passing ## in front 
         // of the server name, and in this case tell libircclient not to verify the cert
-        if (ucfg.sslActivated[2] != 'v') {
+        if (ucfg.sslActivated[1] != 'v') {
             irc_option_set(s, LIBIRC_OPTION_SSL_NO_VERIFY);
         }
     }
