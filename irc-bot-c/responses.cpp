@@ -98,7 +98,7 @@ int check_regex(UChar *str, static UChar *pattern[], unsigned int *numPatterns) 
         r = onig_search(reg, str, end, start, range, region, ONIG_OPTION_NONE);
 
         if (r >= 0) {
-            fprintf(stderr, "%s - match at %d\n", str, r);
+            fprintf(stderr, "%match at %d\n", r);
             for (int j = 0; j < region->num_regs; j++) {
                 fprintf(stderr, "%d: (%d-%d)\n", j, region->beg[j], region->end[j]);
             }
