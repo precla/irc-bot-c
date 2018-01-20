@@ -99,12 +99,17 @@ int check_regex(UChar *str, static UChar *pattern[], unsigned int *numPatterns) 
 
         if (r >= 0) {
             fprintf(stderr, "%match at %d\n", r);
+
+#ifdef DEBUG
             for (int j = 0; j < region->num_regs; j++) {
                 fprintf(stderr, "%d: (%d-%d)\n", j, region->beg[j], region->end[j]);
             }
-            // Matched! stop the loop because no need to check for the rest of the patterns
-            // set numPatterns to the index of the matched pattern for additional stuff (search: FIND_RATING)
-            // return 0 as success
+#endif // DEBUG
+
+            /* Matched! stop the loop because no need to check for the rest of the patterns
+               set numPatterns to the index of the matched pattern for additional stuff (search: FIND_RATING)
+               return 0 as success
+            */
             *numPatterns = i;
             r = 0;
             break;
