@@ -6,14 +6,14 @@
 #include <string.h>
 #include <cstddef>
 
-// libcurl - curl.haxx.se/libcurl/
+/* libcurl - curl.haxx.se/libcurl/ */
 #include <curl\curl.h>
 
-// libircclient - ulduzsoft.com/libircclient/
+/* libircclient - ulduzsoft.com/libircclient/ */
 #include <libircclient\libircclient.h>
 #include <libircclient\libirc_rfcnumeric.h>
 
-// oniguruma - github.com/kkos/oniguruma
+/* oniguruma - github.com/kkos/oniguruma */
 #include <oniguruma\oniguruma.h>
 
 #include "responses.h"

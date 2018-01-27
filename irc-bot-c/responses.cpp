@@ -1,8 +1,8 @@
 #include "responses.h"
 
-// TITLE_TAGS -> "<title>" and "</title>"
+/* TITLE_TAGS -> "<title>" and "</title>" */
 #define TITLE_TAGS 2
-// TITLE_TAG_LENGTH -> length of the "<title>" tag
+/* TITLE_TAG_LENGTH -> length of the "<title>" tag */
 #define TITLE_TAG_LENGTH 7
 
 void init_string_s(string_c *s) {
@@ -31,18 +31,19 @@ size_t write_response(void *ptr, size_t size, size_t nmemb, string_c *s) {
 
 char *check_message_for_url(const char *inputUrl) {
     
-    // first check if it's a URL
-    // simple pattern that checks if it starts with either 'http://' or 'https://'
+    /* first check if it's a URL
+     * simple pattern that checks if it starts with either 'http://' or 'https://'
+     */
     static UChar *httpPattern[] = { (UChar*)"^(http|https):(?:\/\/)(\\S+)" };
 
     unsigned int numberOfPatterns = (sizeof(httpPattern) / sizeof(char*));
 
     if (check_regex((UChar *)inputUrl, httpPattern, &numberOfPatterns)) {
-        // no URL, abandon ship
+        /* no URL, abandon ship */
         return NULL;
     }
 
-    // it's an URL, continue
+    /* it's an URL, continue */
     static UChar *domains[] = { (UChar*)"https?:\/\/(www.)?youtu(be|.be)?(.com)?\/(watch\?v=)?(\\S+)",
                                 (UChar*)"https?:\/\/(i.imgur|imgur).com\/(\\S+)",
                                 (UChar*)"https?:\/\/twitter.com\/\\w*(\/status\/\\d*)?",
@@ -52,11 +53,11 @@ char *check_message_for_url(const char *inputUrl) {
     numberOfPatterns = (sizeof(domains) / sizeof(char*));
 
     if (check_regex((UChar *)inputUrl, domains, &numberOfPatterns)) {
-        // no domain match, abandon boat
+        /* no domain match, abandon boat */
         return NULL;
     }
 
-    // numberOfPatterns holds the index of the matched pattern
+    /* numberOfPatterns holds the index of the matched pattern */
     unsigned int matchedUrlIndex = numberOfPatterns;
 
     char *cRegexValue = grab_url_data(inputUrl, &matchedUrlIndex);
@@ -65,7 +66,7 @@ char *check_message_for_url(const char *inputUrl) {
 }
 
 int check_regex(UChar *str, static UChar *pattern[], unsigned int *numPatterns) {
-    // use 'r' as the onig_new return value, but also as the return value of check_regex()
+    /* use 'r' as the onig_new return value, but also as the return value of check_regex() */
     int r;
     unsigned char *start, *range, *end;
     regex_t* reg;
@@ -85,7 +86,7 @@ int check_regex(UChar *str, static UChar *pattern[], unsigned int *numPatterns) 
             OnigUChar s[ONIG_MAX_ERROR_MESSAGE_LEN];
             onig_error_code_to_str(s, r, &einfo);
             fprintf(stderr, "ERROR: %s - %s\n", str, s);
-            // error, stop the loop and return 1
+            /* error, stop the loop and return 1 */
             r = 1;
             break;
         }
@@ -104,7 +105,7 @@ int check_regex(UChar *str, static UChar *pattern[], unsigned int *numPatterns) 
             for (int j = 0; j < region->num_regs; j++) {
                 fprintf(stderr, "%d: (%d-%d)\n", j, region->beg[j], region->end[j]);
             }
-#endif // DEBUG
+#endif /* DEBUG */
 
             /* Matched! stop the loop because no need to check for the rest of the patterns
                set numPatterns to the index of the matched pattern for additional stuff (search: FIND_RATING)
@@ -173,7 +174,7 @@ char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
     }
 
     char *start = strstr(htmlData, "<title>");
-    // move by <title> tag length
+    /* move by <title> tag length */
     start = start + TITLE_TAG_LENGTH;
     char *end = strstr(htmlData, "<\/title>");
 
@@ -181,10 +182,11 @@ char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
 
     strncat(title, start, (size_t)(end - start) % 256);
 
-    // see 'enum domains_i' to check what index is for what url in 'matchedUrlIndex'
-    // FIND_RATING - find rating if the link was a imdb/yt link
+    /* see 'enum domains_i' to check what index is for what url in 'matchedUrlIndex'
+     * FIND_RATING - find rating if the link was a imdb/yt link
+     */
     if (matchedUrlIndex == Imdb) {
-        // <strong title="7.7 based on 11,037 user ratings"><span itemprop="ratingValue">
+        /* <strong title="7.7 based on 11,037 user ratings"><span itemprop="ratingValue"> */
         start = strstr(htmlData, "<strong title=\"");
         start = start + strlen("<strong title=\"");
         end = strstr(htmlData, "\"><span itemprop=\"ratingValue\">");
