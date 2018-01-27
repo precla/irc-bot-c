@@ -179,7 +179,7 @@ char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
 
     char *title = (char *)calloc(512, sizeof(char));
 
-    strncpy(title, start, (size_t)(end - start) % 256);
+    strncat(title, start, (size_t)(end - start) % 256);
 
     // see 'enum domains_i' to check what index is for what url in 'matchedUrlIndex'
     // FIND_RATING - find rating if the link was a imdb/yt link
@@ -190,7 +190,7 @@ char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
         end = strstr(htmlData, "\"><span itemprop=\"ratingValue\">");
 
         char *rating = (char *)calloc(256, sizeof(char));
-        strncpy(rating, start, (size_t)(end - start) % 256);
+        strncat(rating, start, (size_t)(end - start) % 256);
 
         strncat(title, " - ", 3);
 
