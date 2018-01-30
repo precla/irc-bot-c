@@ -183,6 +183,13 @@ char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
     start = start + TITLE_TAG_LENGTH;
     char *end = strstr(htmlData, "<\/title>");
 
+    /* Fix if there are whitespace characters at the start of the title */
+    char *cleanText = start;
+    while (cleanText < end && isspace(*cleanText)) {
+        ++cleanText;
+    }
+    start = cleanText;
+
     char *title = (char *)calloc(512, sizeof(char));
 
     strncat(title, start, (size_t)(end - start) % 256);
