@@ -194,7 +194,7 @@ char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
         /* <strong title="7.7 based on 11,037 user ratings"><span itemprop="ratingValue"> */
         start = strstr(htmlData, "<strong title=\"");
         start = start + strlen("<strong title=\"");
-        end = strstr(htmlData, "\"><span itemprop=\"ratingValue\">");
+        end = strstr(start, "\"><span itemprop=\"ratingValue\">");
 
         char *rating = (char *)calloc(256, sizeof(char));
         strncat(rating, start, (size_t)(end - start) % 256);
