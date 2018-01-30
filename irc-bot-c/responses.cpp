@@ -5,6 +5,11 @@
 /* TITLE_TAG_LENGTH -> length of the "<title>" tag */
 #define TITLE_TAG_LENGTH 7
 
+/* Lenght of text that comes before the like rating */
+#define LIKE_LENGTH 42
+/* Lenght of text that comes before the dislike rating */
+#define DISLIKE_LENGTH 45
+
 void init_string_s(string_c *s) {
     s->len = 0;
     s->ptr = (char *)malloc(s->len + 1);
@@ -198,6 +203,27 @@ char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
 
         strncat(title, rating, 253);
         free(rating);
+    } else if (matchedUrlIndex == Youtube) {
+        start = strstr(htmlData, "video-extras-sparkbar-likes");
+        start = start + LIKE_LENGTH;
+        end = strstr(start, "\%");
+        char *likes = (char *)calloc(24, sizeof(char));
+        strncat(likes, start, (size_t)(end - start) % 24);
+        strncat(likes, "\% likes \/", 12);
+
+        /* start searching from previous 'start' - no need to go trough the whole htmlData
+         * since the 'dislike' data comes after the 'like' data
+         */
+        start = strstr(start, "video-extras-sparkbar-dislikes");
+        start = start + DISLIKE_LENGTH;
+        end = strstr(start, "\%");
+        char *dislikes = (char *)calloc(24, sizeof(char));
+        strncat(dislikes, start, (size_t)(end - start) % 24);
+        strncat(dislikes, "\% dislikes", 12);
+
+        title = strncat(title, " \|", 2);
+        title = strncat(title, likes, strlen(likes));
+        title = strncat(title, dislikes, strlen(dislikes));
     }
 
     return title;
