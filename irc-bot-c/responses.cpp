@@ -231,6 +231,9 @@ char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
         title = strncat(title, " \|", 2);
         title = strncat(title, likes, strlen(likes));
         title = strncat(title, dislikes, strlen(dislikes));
+
+        free(likes);
+        free(dislikes);
     }
 
     return title;
