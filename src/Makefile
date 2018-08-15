@@ -1,4 +1,5 @@
 TARGET = irc-bot-c
+TARGET_DEBUG = irc-bot-c_dev
 CC = gcc
 CFLAGS = -Wall
 BUILD = -O2
@@ -8,13 +9,21 @@ OBJ = $(wildcard *.o)
 
 default: $(TARGET)
 all: default
-	echo build done
 
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+# build for produciton, with optimization flag:
+$(TARGET): objfilesprod
+	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIBS)
 
-$(OBJ): $(SRC)
-	$(CC) $(CFLAGS) -c $^
+objfilesprod:
+	$(CC) $(CFLAGS) $(BUILD) -c $(SRC)
+
+# build for debug, with debug flag:
+$(TARGET_DEBUG): objfilesdebug
+	$(CC) $(CFLAGS) -g -o $@ $(OBJ) $(LIBS)
+
+objfilesdebug:
+	$(CC) $(CFLAGS) -g -c $(SRC)
+
 
 clean:
-	rm *.o $(TARGET)
+	rm *.o $(TARGET) $(TARGET)
