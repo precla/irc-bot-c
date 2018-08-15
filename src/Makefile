@@ -26,4 +26,4 @@ objfilesdebug:
 
 
 clean:
-	rm *.o $(TARGET) $(TARGET)
+	rm *.o $(TARGET) $(TARGET_DEBUG)
