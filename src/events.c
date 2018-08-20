@@ -30,16 +30,40 @@ void event_channel(irc_session_t * session, const char * event, const char * ori
         return;
     }
 
+    printf("Checking if the following parameter triggers any function: %s\n" , params[1]);
+
     if (params[1]) {
 
-        char *returnValue = check_message_for_url(params[1]);
-
-        if (!returnValue) {
+        if (check_message_for_url(params[1])) {
             return;
         }
 
-        irc_cmd_msg(session, params[0], returnValue);
+        /* specialDomain - for special domains with extra features.
+        * See enum special_domains for the list of those domains and
+        * the corresponding index.
+        * It holds the index of the matched domain.
+        * if it stays '-1' it means no match for any of those
+        */
+        short specialDomain = -1;
+
+        /* check if yt link, except channel links */
+        if(search_special_domains(params[1], "(https?(:\/\/))?(www.)?youtu(be|.be)?(.com)?\/[^(channel)](watch\?v=)?(\S+)")){
+            specialDomain = 0;
+        }
+
+        /* check if imdb link - only for movies/shows/etc., not for actors or similiar */
+        if(search_special_domains(params[1], "(https?(:\/\/))?(www.)(imdb.com)\/(title)(\S+)")){
+            specialDomain = 1;
+        }
+
+        char *messageToIrc = grab_url_data(params[1], specialDomain);
+
+        irc_cmd_msg(session, params[0], messageToIrc);
+        return;
     }
+
+    printf("No trigger for this message.\n");
+    return;
 }
 
 /*

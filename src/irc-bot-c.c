@@ -11,9 +11,6 @@
 #include <libircclient/libircclient.h>
 #include <libircclient/libirc_rfcnumeric.h>
 
-/* oniguruma - github.com/kkos/oniguruma */
-#include <oniguruma.h>
-
 #include "events.h"
 #include "responses.h"
 #include "structs.h"
@@ -50,6 +47,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    printf("Config file %s loaded.\n", argv[1]);
+
     char *checkCfgParameter = (char *)calloc(MAXLENGTH, sizeof(char));
     ucfg.botNick = (char *)calloc(MAXLENGTH, sizeof(char));
     ucfg.server = (char *)calloc(MAXLENGTH, sizeof(char));
@@ -78,6 +77,10 @@ int main(int argc, char **argv) {
             fscanf(f, " %96s", ucfg.nickservPassword);
         }
     }
+
+    printf("bot nick: %s\nssl: %s\n", ucfg.botNick, ucfg.sslActivated);
+    printf("server: %s\nport: %d\n", ucfg.server, ucfg.port);
+    printf("channel(s): %s\nnickserv auth: ***\n", ucfg.channel);
     
     /* create the IRC session; 0 means error */
     s = irc_create_session(&callbacks);
@@ -88,6 +91,8 @@ int main(int argc, char **argv) {
         free(checkCfgParameter);
         return 1;
     }
+
+    printf("IRC session created\n");
 
     irc_set_ctx(s, &ucfg);
     irc_option_set(s, LIBIRC_OPTION_STRIPNICKS);
@@ -108,6 +113,8 @@ int main(int argc, char **argv) {
         free(checkCfgParameter);
         return 1;
     }
+
+    printf("IRC server connection successfully created.\n");
 
     /* and run into forever loop, generating events */
     if (irc_run(s)) {

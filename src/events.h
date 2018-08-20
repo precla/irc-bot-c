@@ -6,15 +6,9 @@
 #include <string.h>
 #include <stddef.h>
 
-/* libcurl - curl.haxx.se/libcurl/ */
-#include <curl/curl.h>
-
 /* libircclient - ulduzsoft.com/libircclient/ */
 #include <libircclient/libircclient.h>
 #include <libircclient/libirc_rfcnumeric.h>
-
-/* oniguruma - github.com/kkos/oniguruma */
-#include <oniguruma.h>
 
 #include "responses.h"
 #include "structs.h"

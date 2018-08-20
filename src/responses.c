@@ -1,7 +1,5 @@
 #include "responses.h"
 
-/* TITLE_TAGS -> "<title>" and "</title>" */
-#define TITLE_TAGS 2
 /* TITLE_TAG_LENGTH -> length of the "<title>" tag */
 #define TITLE_TAG_LENGTH 7
 
@@ -10,133 +8,87 @@
 /* Lenght of text that comes before the dislike rating */
 #define DISLIKE_LENGTH 45
 
-void init_string_s(string_c *s) {
-    s->len = 0;
-    s->ptr = (char *)malloc(s->len + 1);
-    if (s->ptr == NULL) {
-        fprintf(stderr, "malloc() failed\n");
-        exit(EXIT_FAILURE);
-    }
-    s->ptr[0] = '\0';
-}
-
-size_t write_response(void *ptr, size_t size, size_t nmemb, string_c *s) {
-    size_t new_len = s->len + size*nmemb;
-    s->ptr = (char *)realloc(s->ptr, new_len + 1);
-    if (s->ptr == NULL) {
+size_t write_response(void *ptr, size_t size, size_t nmemb, char *s) {
+    size_t new_len = sizeof(s) + (size * nmemb);
+    s = (char *)realloc(s, new_len + 1);
+    if (s == NULL) {
         fprintf(stderr, "realloc() failed\n");
         exit(EXIT_FAILURE);
     }
-    memcpy(s->ptr + s->len, ptr, size*nmemb);
-    s->ptr[new_len] = '\0';
-    s->len = new_len;
+    memcpy(s + sizeof(s), ptr, size*nmemb);
+    s[new_len] = '\0';
 
     return size*nmemb;
 }
 
-char *check_message_for_url(const char *inputUrl) {
-    
+int check_message_for_url(const char *inputUrl) {
     /* first check if it's a URL
      * simple pattern that checks if it starts with either 'http://' or 'https://'
      */
-    static UChar *httpPattern[] = { (UChar*)"^(http|https):(?:\/\/)(\\S+)" };
+    const char *httpPattern = "(https|http):(\/\/)";
 
-    unsigned int numberOfPatterns = (sizeof(httpPattern) / sizeof(char*));
-
-    if (check_regex((UChar *)inputUrl, httpPattern, &numberOfPatterns)) {
-        /* no URL, abandon ship */
-        return NULL;
+    if(search_pattern(inputUrl, httpPattern)){
+        return 1;
     }
-
-    /* it's an URL, continue */
-    static UChar *domains[] = { (UChar*)"https?:\/\/(www.)?youtu(be|.be)?(.com)?\/(watch\?v=)?(\\S+)",
-                                (UChar*)"https?:\/\/(i.imgur|imgur).com\/(\\S+)",
-                                (UChar*)"https?:\/\/twitter.com\/\\w*(\/status\/\\d*)?",
-                                (UChar*)"https?:\/\/(www.)?imdb.com\/(title\/\\S+)",
-                                };
-
-    numberOfPatterns = (sizeof(domains) / sizeof(char*));
-
-    if (check_regex((UChar *)inputUrl, domains, &numberOfPatterns)) {
-        /* no domain match, abandon boat */
-        return NULL;
-    }
-
-    /* numberOfPatterns holds the index of the matched pattern */
-    unsigned int matchedUrlIndex = numberOfPatterns;
-
-    char *cRegexValue = grab_url_data(inputUrl, &matchedUrlIndex);
-
-    return cRegexValue;
+    return 0;
 }
 
-int check_regex(UChar *str, UChar *pattern[], unsigned int *numPatterns) {
-    /* use 'r' as the onig_new return value, but also as the return value of check_regex() */
-    int r;
-    unsigned char *start, *range, *end;
-    regex_t* reg;
-    OnigErrorInfo einfo;
-    OnigRegion *region;
+int search_pattern(const char *str, const char *pattern) {
+    /* use 'regreturn' as the regcomp() return value,
+     * but also as the return value of regexec().
+     * no need for two separate variables since they won't
+     * be used at the same time.
+     */
+    int regreturn;
+    regex_t reg;
+    size_t nmatch;
+    regmatch_t *pmatch;
 
-    OnigEncoding use_encs[] = { ONIG_ENCODING_UTF8 };
-    onig_initialize(use_encs, sizeof(use_encs) / sizeof(use_encs[0]));
-
-    for (unsigned int i = 0; i < *numPatterns; i++) {
-
-        UChar* checkPattern = pattern[i];
-
-        r = onig_new(&reg, checkPattern, checkPattern + strlen((char*)checkPattern), ONIG_OPTION_DEFAULT, ONIG_ENCODING_UTF8, ONIG_SYNTAX_DEFAULT, &einfo);
-
-        if (r != ONIG_NORMAL) {
-            OnigUChar s[ONIG_MAX_ERROR_MESSAGE_LEN];
-            onig_error_code_to_str(s, r, &einfo);
-            fprintf(stderr, "ERROR: %s - %s\n", str, s);
-            /* error, stop the loop and return 1 */
-            r = 1;
-            break;
-        }
-
-        region = onig_region_new();
-
-        end = str + strlen((char*)str);
-        start = str;
-        range = end;
-        r = onig_search(reg, str, end, start, range, region, ONIG_OPTION_NONE);
-
-        if (r >= 0) {
-            fprintf(stderr, "%match at %d\n", r);
-
-#ifdef DEBUG
-            for (int j = 0; j < region->num_regs; j++) {
-                fprintf(stderr, "%d: (%d-%d)\n", j, region->beg[j], region->end[j]);
-            }
-#endif /* DEBUG */
-
-            /* Matched! stop the loop because no need to check for the rest of the patterns
-               set numPatterns to the index of the matched pattern for additional stuff (search: FIND_RATING)
-               return 0 as success
-            */
-            *numPatterns = i;
-            r = 0;
-            break;
-        }
+    regreturn = regcomp(&reg, &pattern, REG_EXTENDED);
+    if(regreturn){
+        /* error while compiling a regular expression.
+         * stop here, return with 1 to indicate an error
+         */
+        fprintf(stderr, "\nError in regcomp.\n");
+        return 1;
     }
 
-    onig_region_free(region, 1);
-    onig_free(reg);
-    onig_end();
-    return r;
+    regreturn = regexec(&reg, str, nmatch, pmatch, REG_NOTEOL);
+    if (regreturn == REG_NOMATCH){
+        /* no match, exit and free up 'reg' */
+        fprintf(stderr, "No match in regexec.\n");
+        regfree(&reg);
+        return 1;
+    } else if (regreturn){
+        char regerr[128];
+        regerror(regreturn, &reg, regerr, sizeof(regerr));
+        fprintf(stderr, "Regex match failed: %s\n", regerr);
+        regfree(&reg);
+        return 1;
+    }
+
+    fprintf(stderr, "\nIt is an URL. yay");
+
+    regfree(&reg);
+    return regreturn;
 }
 
-char *grab_url_data(const char *url, unsigned int *matchedUrlIndex) {
+int search_special_domains(const char *url, const char *pattern){
+    if (search_pattern(url, pattern) != -1)
+        return 0;
+    
+    return 1;
+}
+
+char *grab_url_data(const char *url, const short specialDomain) {
     CURL *curl = curl_easy_init();
     char *title = NULL;
 
     if (curl) {
         CURLcode res;
-        string_c response;
+        char *response = calloc(INT_MAX, sizeof(char *));
 
-        init_string_s(&response);
+        // init_string_s(&response);
 
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -154,10 +106,10 @@ char *grab_url_data(const char *url, unsigned int *matchedUrlIndex) {
         fprintf(stderr, "Curl success with - %s\n", url);
 
         // send the data to find_title_tag() to find the title of the url
-        title = find_title_tag(response.ptr, *matchedUrlIndex);
+        title = find_title_tag(response, specialDomain);
 
         // clean up data that won't be needed anymore
-        free(response.ptr);
+        free(response);
         curl_easy_cleanup(curl);
 
         if (!title) {
@@ -167,13 +119,10 @@ char *grab_url_data(const char *url, unsigned int *matchedUrlIndex) {
     return title;
 }
 
-char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
-    
-    static UChar *pattern[] = { (UChar*)"<title>", (UChar*)"<\/title>" };
+char *find_title_tag(char *htmlData, const short specialDomain) {
+    const char *pattern = "<title>";
 
-    unsigned int tt = TITLE_TAGS;
-
-    if (check_regex((UChar *)htmlData, pattern, &tt)) {
+    if (search_pattern(htmlData, pattern)) {
         fprintf(stderr, "No title tag found");
         return NULL;
     }
@@ -194,23 +143,10 @@ char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
 
     strncat(title, start, (size_t)(end - start) % 256);
 
-    /* see 'enum domains_i' to check what index is for what url in 'matchedUrlIndex'
-     * FIND_RATING - find rating if the link was a imdb/yt link
+    /* see 'enum special_domains' to check what index 
+     * stands for what url in 'matchedUrlIndex'
      */
-    if (matchedUrlIndex == Imdb) {
-        /* <strong title="7.7 based on 11,037 user ratings"><span itemprop="ratingValue"> */
-        start = strstr(htmlData, "<strong title=\"");
-        start = start + strlen("<strong title=\"");
-        end = strstr(start, "\"><span itemprop=\"ratingValue\">");
-
-        char *rating = (char *)calloc(256, sizeof(char));
-        strncat(rating, start, (size_t)(end - start) % 256);
-
-        strncat(title, " - ", 3);
-
-        strncat(title, rating, 253);
-        free(rating);
-    } else if (matchedUrlIndex == Youtube) {
+    if (specialDomain == YOUTUBE) {
         start = strstr(htmlData, "video-extras-sparkbar-likes");
         start = start + LIKE_LENGTH;
         end = strstr(start, "\%");
@@ -234,6 +170,19 @@ char *find_title_tag(char *htmlData, unsigned int matchedUrlIndex) {
 
         free(likes);
         free(dislikes);
+
+    } else if (specialDomain == IMDB) {
+        start = strstr(htmlData, "<strong title=\"");
+        start = start + strlen("<strong title=\"");
+        end = strstr(start, "\"><span itemprop=\"ratingValue\">");
+
+        char *rating = (char *)calloc(256, sizeof(char));
+        strncat(rating, start, (size_t)(end - start) % 256);
+
+        strncat(title, " - ", 3);
+
+        strncat(title, rating, 253);
+        free(rating);
     }
 
     return title;
