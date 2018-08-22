@@ -6,22 +6,37 @@
 /* TITLE_TAG_LENGTH -> length of the "<title>" tag */
 #define TITLE_TAG_LENGTH 7
 
-/* Lenght of text that comes before the like rating */
-#define LIKE_LENGTH 42
-/* Lenght of text that comes before the dislike rating */
+/* Length of text that comes before the like rating */
+#define LIKE_LENGTH 43
+/* Length of text that comes before the dislike rating */
 #define DISLIKE_LENGTH 45
+/* percentage with comma, forexample: 78.12 */
+#define PERCENTAGE 5
+/* Length of rating tag + rating -> '"ratingValue": "7.7"'*/
+#define RATING_LENGTH_START 16
+#define RATING_LENGTH_END 19
 
-size_t write_response(void *ptr, size_t size, size_t nmemb, char *s) {
-    size_t new_len = sizeof(s) + (size * nmemb);
-    s = (char *)realloc(s, new_len + 1);
-    if (s == NULL) {
-        fprintf(stderr, "realloc() failed\n");
-        exit(EXIT_FAILURE);
+struct MemoryStruct {
+    char *memory;
+    size_t size;
+};
+
+size_t write_response(void *ptr, size_t size, size_t nmemb, char *str) {
+    size_t realsize = size * nmemb;
+    struct MemoryStruct *mem = (struct MemoryStruct *)str;
+
+    mem->memory = realloc(mem->memory, mem->size + realsize + 1);
+    if(mem->memory == NULL) {
+        /* out of memory! */ 
+        printf("not enough memory (realloc returned NULL)\n");
+        return 0;
     }
-    memcpy(s + sizeof(s), ptr, size*nmemb);
-    s[new_len] = '\0';
 
-    return size*nmemb;
+    memcpy(&(mem->memory[mem->size]), ptr, realsize);
+    mem->size += realsize;
+    mem->memory[mem->size] = 0;
+
+    return realsize;
 }
 
 int check_message_for_url(const char *inputText) {
@@ -60,7 +75,7 @@ int search_pattern(const char *str, const char *pattern) {
     regreturn = regexec(&reg, str, 0, NULL, 0);
     if (regreturn == REG_NOMATCH){
         /* no match, exit and free up 'reg' */
-        fprintf(stderr, "No match in regexec.\n");
+        fprintf(stderr, "No match in regexec! pattern: %s\n", pattern);
         regfree(&reg);
         return 1;
     } else if (regreturn){
@@ -71,12 +86,13 @@ int search_pattern(const char *str, const char *pattern) {
         return 1;
     }
 
+    fprintf(stderr, "Match in regexec! pattern: %s\n", pattern);
     regfree(&reg);
     return regreturn;
 }
 
 int search_special_domains(const char *url, const char *pattern){
-    if (search_pattern(url, pattern) != -1)
+    if (search_pattern(url, pattern) != 1)
         return 0;
     
     return 1;
@@ -132,7 +148,7 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
     char *start = strstr(htmlData, "<title>");
     /* move by <title> tag length */
     start = start + TITLE_TAG_LENGTH;
-    char *end = strstr(htmlData, "<\/title>");
+    char *end = strstr(htmlData, "</title>");
 
     /* Fix if there are whitespace characters at the start of the title */
     char *cleanText = start;
@@ -142,49 +158,63 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
     start = cleanText;
 
     char *title = (char *)calloc(512, sizeof(char));
-
-    strncat(title, start, (size_t)(end - start) % 256);
+    strncat(title, "URL: ", 6);
+    strncat(title, start, (size_t)(end - start) % 250);
 
     /* see 'enum special_domains' to check what index 
      * stands for what url in 'matchedUrlIndex'
      */
     if (specialDomain == YOUTUBE) {
         start = strstr(htmlData, "video-extras-sparkbar-likes");
-        start = start + LIKE_LENGTH;
-        end = strstr(start, "\%");
-        char *likes = (char *)calloc(24, sizeof(char));
-        strncat(likes, start, (size_t)(end - start) % 24);
-        strncat(likes, "\% likes \/", 12);
+        if(start && end){
+            start = start + LIKE_LENGTH;
+            end = strstr(start, "\%");
 
-        /* start searching from previous 'start' - no need to go trough the whole htmlData
-         * since the 'dislike' data comes after the 'like' data
-         */
-        start = strstr(start, "video-extras-sparkbar-dislikes");
-        start = start + DISLIKE_LENGTH;
-        end = strstr(start, "\%");
-        char *dislikes = (char *)calloc(24, sizeof(char));
-        strncat(dislikes, start, (size_t)(end - start) % 24);
-        strncat(dislikes, "\% dislikes", 12);
+            char *likes = (char *)calloc(14, sizeof(char));
+            if(likes == NULL){
+                return title;
+            }
+            strncat(likes, start, PERCENTAGE);
+            strncat(likes, "\% likes /", 14);
 
-        title = strncat(title, " \|", 2);
-        title = strncat(title, likes, strlen(likes));
-        title = strncat(title, dislikes, strlen(dislikes));
+            /* start searching from previous 'start' - no need to go trough the whole htmlData
+            * since the 'dislike' data comes after the 'like' data
+            */
+            start = strstr(start, "video-extras-sparkbar-dislikes");
+            start = start + DISLIKE_LENGTH;
+            end = strstr(start, "\%");
+        
+            char *dislikes = (char *)calloc(12, sizeof(char));
+            if(dislikes == NULL){
+                return title;
+            }
+            strncat(dislikes, start, PERCENTAGE);
+            strncat(dislikes, "\% dislikes", 12);
 
-        free(likes);
-        free(dislikes);
-
+            title = strncat(title, " | ", 4);
+            title = strncat(title, likes, strlen(likes));
+            title = strncat(title, dislikes, strlen(dislikes));
+            free(dislikes);
+            free(likes);
+        }
     } else if (specialDomain == IMDB) {
-        start = strstr(htmlData, "<strong title=\"");
-        start = start + strlen("<strong title=\"");
-        end = strstr(start, "\"><span itemprop=\"ratingValue\">");
+        //start = strstr(htmlData, "<strong title=\"");
+        start = strstr(htmlData, "\"ratingValue\": \"") + RATING_LENGTH_START;
+        end = start + RATING_LENGTH_END;
 
-        char *rating = (char *)calloc(256, sizeof(char));
-        strncat(rating, start, (size_t)(end - start) % 256);
+        if (start && end){
+            char *rating = (char *)calloc(4, sizeof(char));
+            if(rating == NULL){
+                return title;
+            }
+            strncat(rating, start, (size_t)(end - start) % 4);
 
-        strncat(title, " - ", 3);
+            strncat(title, " - ", 4);
+            strncat(title, rating, 4);
+            strncat(title, "/10", 4);
 
-        strncat(title, rating, 253);
-        free(rating);
+            free(rating);
+        }
     }
 
     return title;
