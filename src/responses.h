@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 #include <regex.h>
+#include <ctype.h>
 
 /* libcurl - curl.haxx.se/libcurl/ */
 #include <curl/curl.h>

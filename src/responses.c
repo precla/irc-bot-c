@@ -1,5 +1,8 @@
 #include "responses.h"
 
+/* Max amount of matches with regexec()*/
+#define MAX_MATCHED 1
+
 /* TITLE_TAG_LENGTH -> length of the "<title>" tag */
 #define TITLE_TAG_LENGTH 7
 
@@ -21,15 +24,18 @@ size_t write_response(void *ptr, size_t size, size_t nmemb, char *s) {
     return size*nmemb;
 }
 
-int check_message_for_url(const char *inputUrl) {
+int check_message_for_url(const char *inputText) {
     /* first check if it's a URL
      * simple pattern that checks if it starts with either 'http://' or 'https://'
      */
-    const char *httpPattern = "(https|http):(\/\/)";
+    const char *httpPattern = "http(s?):[^[:space:]]+";
 
-    if(search_pattern(inputUrl, httpPattern)){
+    if(search_pattern(inputText, httpPattern)){
+        fprintf(stderr, "'%s' is not an URL.\nNo match for '%s'\n", inputText, httpPattern);
         return 1;
     }
+
+    fprintf(stderr, "'%s' is an URL. yay\n", inputText);
     return 0;
 }
 
@@ -41,10 +47,8 @@ int search_pattern(const char *str, const char *pattern) {
      */
     int regreturn;
     regex_t reg;
-    size_t nmatch;
-    regmatch_t *pmatch;
 
-    regreturn = regcomp(&reg, &pattern, REG_EXTENDED);
+    regreturn = regcomp(&reg, pattern, REG_EXTENDED | REG_NOSUB);
     if(regreturn){
         /* error while compiling a regular expression.
          * stop here, return with 1 to indicate an error
@@ -53,7 +57,7 @@ int search_pattern(const char *str, const char *pattern) {
         return 1;
     }
 
-    regreturn = regexec(&reg, str, nmatch, pmatch, REG_NOTEOL);
+    regreturn = regexec(&reg, str, 0, NULL, 0);
     if (regreturn == REG_NOMATCH){
         /* no match, exit and free up 'reg' */
         fprintf(stderr, "No match in regexec.\n");
@@ -66,8 +70,6 @@ int search_pattern(const char *str, const char *pattern) {
         regfree(&reg);
         return 1;
     }
-
-    fprintf(stderr, "\nIt is an URL. yay");
 
     regfree(&reg);
     return regreturn;
