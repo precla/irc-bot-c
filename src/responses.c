@@ -186,6 +186,7 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
         
             char *dislikes = (char *)calloc(12, sizeof(char));
             if(dislikes == NULL){
+                free(likes);
                 return title;
             }
             strncat(dislikes, start, PERCENTAGE);
