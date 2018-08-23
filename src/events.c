@@ -30,6 +30,8 @@ void event_channel(irc_session_t * session, const char * event, const char * ori
         return;
     }
 
+    clock_t startTime = clock();
+
     printf("Checking if the following parameter triggers any function: %s\n" , params[1]);
 
     if (params[1]) {
@@ -69,6 +71,9 @@ skip_rest_of_special_domains: ;
         char *messageToIrc = grab_url_data(params[1], specialDomain);
 
         irc_cmd_msg(session, params[0], messageToIrc);
+
+        fprintf(stderr, "\nTime to execute succesfully: %f seconds.\n", (clock() - startTime)/(double)CLOCKS_PER_SEC );
+
         return;
     }
 

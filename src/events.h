@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stddef.h>
+#include <time.h>
 
 /* libircclient - ulduzsoft.com/libircclient/ */
 #include <libircclient/libircclient.h>
