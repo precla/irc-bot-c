@@ -1,7 +1,7 @@
 TARGET = irc-bot-c
 TARGET_DEBUG = irc-bot-c_dev
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -std=c18 -pedantic
 BUILD = -O2
 LDFLAGS = -lcurl -lircclient -lcrypto -lssl
 SRC = $(wildcard *.c)
