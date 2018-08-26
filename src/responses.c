@@ -199,7 +199,11 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
             free(likes);
         }
     } else if (specialDomain == IMDB) {
-        //start = strstr(htmlData, "<strong title=\"");
+        if(strstr(htmlData, "notEnoughRatings")){
+            strncat(title, " - no rating", 12);
+            return title;
+        }
+
         start = strstr(htmlData, "\"ratingValue\": \"") + RATING_LENGTH_START;
         end = start + RATING_LENGTH_END;
 
