@@ -200,7 +200,8 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
         }
     } else if (specialDomain == IMDB) {
         if(strstr(htmlData, "notEnoughRatings")){
-            strncat(title, " - no rating", 12);
+            /* 13 - length of " - no rating" */
+            strncat(title, " - no rating", 13);
             return title;
         }
 
