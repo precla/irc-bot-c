@@ -168,21 +168,21 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
         start = strstr(htmlData, "video-extras-sparkbar-likes");
         if(start && end){
             start = start + LIKE_LENGTH;
-            end = strstr(start, "\%");
+            end = strstr(start, "%%");
 
             char *likes = (char *)calloc(14, sizeof(char));
             if(likes == NULL){
                 return title;
             }
             strncat(likes, start, PERCENTAGE);
-            strncat(likes, "\% likes /", 14);
+            strncat(likes, "%% likes /", 14);
 
             /* start searching from previous 'start' - no need to go trough the whole htmlData
             * since the 'dislike' data comes after the 'like' data
             */
             start = strstr(start, "video-extras-sparkbar-dislikes");
             start = start + DISLIKE_LENGTH;
-            end = strstr(start, "\%");
+            end = strstr(start, "%%");
         
             char *dislikes = (char *)calloc(12, sizeof(char));
             if(dislikes == NULL){
@@ -190,7 +190,7 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
                 return title;
             }
             strncat(dislikes, start, PERCENTAGE);
-            strncat(dislikes, "\% dislikes", 12);
+            strncat(dislikes, "%% dislikes", 12);
 
             title = strncat(title, " | ", 4);
             title = strncat(title, likes, 4);
