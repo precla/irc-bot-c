@@ -1,7 +1,5 @@
 #pragma once
 
-#include <libircclient/libircclient.h>
-
 typedef struct {
     char *botNick, *server, *channel, *nickservPassword;
     unsigned short port;
