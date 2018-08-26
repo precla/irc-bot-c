@@ -104,7 +104,7 @@ char *grab_url_data(const char *url, const short specialDomain) {
 
     if (curl) {
         CURLcode res;
-        char *response = calloc(INT_MAX, sizeof(char *));
+        char *response = (char *)calloc(INT_MAX, sizeof(char *));
 
         // init_string_s(&response);
 

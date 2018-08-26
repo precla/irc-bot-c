@@ -98,8 +98,21 @@ int main(int argc, char **argv) {
     irc_option_set(s, LIBIRC_OPTION_STRIPNICKS);
 
     if (ucfg.sslActivated[0] == 'y') {
-        /* To handle the "SSL certificate verify failed" from command line we allow passing ## in front 
-         * of the server name, and in this case tell libircclient not to verify the cert
+        /* If SSL connection required, add '#' at the beginning of the server
+         * Create new string with # at beginning, append server to it.
+         * copy the new string into the old ucfg.server string.
+         */
+        char *sslServer = (char *)malloc(strlen(ucfg.server) + 2);
+        strcpy(sslServer, "#");
+        strcat(sslServer, ucfg.server);
+        /* todo: fix ssl initialization fail
+        ucfg.server = (char *)malloc(strlen(sslServer) + 1);
+        strcpy(ucfg.server, sslServer);
+        */
+        free(sslServer);
+
+        /* To handle the "SSL certificate verify failed" 
+         * do not verify the ssl cert if 'v' is not set
          */
         if (ucfg.sslActivated[1] != 'v') {
             irc_option_set(s, LIBIRC_OPTION_SSL_NO_VERIFY);
