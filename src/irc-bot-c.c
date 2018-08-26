@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 
     if (argc != 2) {
         printf("Usage: %s server.cfg\n", argv[0]);
-        return 1;
+        exit(1);
     }
 
     /* Initialize the callbacks */
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
     FILE *f = fopen(argv[1], "r");
     if (!f) {
         printf("Could not open %s\n", argv[1]);
-        return 1;
+        exit(1);
     }
 
     printf("Config file %s loaded.\n", argv[1]);
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
         printf("Could not create IRC session\n");
         fclose(f);
         free(checkCfgParameter);
-        return 1;
+        exit(1);
     }
 
     printf("IRC session created\n");
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
         printf("Could not connect: %s\n", irc_strerror(irc_errno(s)));
         fclose(f);
         free(checkCfgParameter);
-        return 1;
+        exit(1);
     }
 
     printf("IRC server connection successfully created.\n");
@@ -121,10 +121,10 @@ int main(int argc, char **argv) {
         printf("Could not connect or I/O error: %s\n", irc_strerror(irc_errno(s)));
         fclose(f);
         free(checkCfgParameter);
-        return 1;
+        exit(1);
     }
 
     free(checkCfgParameter);
     fclose(f);
-    return 1;
+    exit(0);
 }
