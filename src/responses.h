@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <strings.h>
 #include <stddef.h>
 #include <sys/types.h>
 #include <regex.h>
