@@ -193,8 +193,8 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
             strncat(dislikes, "\% dislikes", 12);
 
             title = strncat(title, " | ", 4);
-            title = strncat(title, likes, strlen(likes));
-            title = strncat(title, dislikes, strlen(dislikes));
+            title = strncat(title, likes, 4);
+            title = strncat(title, dislikes, 4);
             free(dislikes);
             free(likes);
         }
