@@ -1,3 +1,5 @@
-server.cfg
 src/build/
+.vscode/
 *.o
+server.cfg
+TODO
