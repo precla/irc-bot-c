@@ -15,6 +15,7 @@ debug: $(TARGET_DEBUG)
 
 # build for production, with optimization flag:
 $(TARGET): $(SRCTOOBJ)
+	mkdir -p $(DEST)
 	$(CC) $(CFLAGS) -o $(DEST)$@ $(SRCTOOBJ) $(LDFLAGS)
 	-rm *.o
 
