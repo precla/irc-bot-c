@@ -116,6 +116,7 @@ char *grab_url_data(const char *url, const short specialDomain) {
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_response);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0");
 
         res = curl_easy_perform(curl);
 
