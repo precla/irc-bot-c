@@ -104,7 +104,10 @@ char *grab_url_data(const char *url, const short specialDomain) {
 
     if (curl) {
         CURLcode res;
-        char *response = (char *)calloc(INT_MAX, sizeof(char *));
+        struct MemoryStruct response;
+
+        response.memory = malloc(1);
+        response.size = 0;
 
         // init_string_s(&response);
 
@@ -124,10 +127,10 @@ char *grab_url_data(const char *url, const short specialDomain) {
         fprintf(stderr, "Curl success with - %s\n", url);
 
         // send the data to find_title_tag() to find the title of the url
-        title = find_title_tag(response, specialDomain);
+        title = find_title_tag(response.memory, specialDomain);
 
         // clean up data that won't be needed anymore
-        free(response);
+        free(response.memory);
         curl_easy_cleanup(curl);
 
         if (!title) {
