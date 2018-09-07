@@ -6,7 +6,7 @@ irc-bot-c is a simple IRC bot with basic functionalities, same as my irc-bot-nod
 1. build & run with: ./irc-bot-c server.cfg
 
 ## Commands:
-- atm none..
+- !sysinfo - get uptime and ram usage of the client
 
 ### Done:
 - grab title from posted URL in irc channel

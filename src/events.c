@@ -34,6 +34,40 @@ void event_channel(irc_session_t * session, const char * event, const char * ori
 
     printf("Checking if the following parameter triggers any function: %s\n" , params[1]);
 
+    if (!strncmp(params[1], "!sysinfo", 9)) {
+        fprintf(stdout, "match for !sysinfo... getting data ready");
+        struct sysinfo info;
+
+        if (!sysinfo(&info)) {
+            char *infoData;
+
+            if ((infoData = (char*)malloc(sizeof(char*) * 128)) == NULL){
+                fprintf(stderr, "Error in malloc() for !sysinfo call.\n");
+                return;
+            }
+
+            int ret = snprintf(infoData, 128,
+                                "Uptime: %ld h %ld m %ld s, RAM: %lu / %lu MB (used/total)",
+                                info.uptime / 3600,                             /* uptime hrs */
+                                (info.uptime % 3600) / 60,                      /* uptime min */
+                                info.uptime % 60,                               /* uptime sec */
+                                (info.totalram - info.freeram) / (1024*1024),   /* get in MB */
+                                info.totalram / (1024*1024));                   /* get in MB */
+
+            if (ret >= 0 && ret < 128){
+                irc_cmd_msg(session, params[0], infoData);
+            } else {
+                fprintf(stderr, "Error in snprintf() call, error: %d\n", ret);
+            }
+
+            free(infoData);
+        } else {
+            fprintf(stderr, "Error in sysinfo() call, errno: %d\n", errno);
+        }
+        fprintf(stderr, "\nTime to execute succesfully: %f seconds.\n", (clock() - startTime)/(double)CLOCKS_PER_SEC );
+        return;
+    }
+
     if (params[1]) {
 
         if (check_message_for_url(params[1])) {

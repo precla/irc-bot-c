@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <time.h>
+#include <sys/sysinfo.h>
 
 /* libircclient - ulduzsoft.com/libircclient/ */
 #include <libircclient/libircclient.h>
