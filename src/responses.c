@@ -28,7 +28,7 @@ size_t write_response(void *ptr, size_t size, size_t nmemb, char *str) {
     mem->memory = realloc(mem->memory, mem->size + realsize + 1);
     if(mem->memory == NULL) {
         /* out of memory! */ 
-        printf("not enough memory (realloc returned NULL)\n");
+        fprintf(stderr, "not enough memory (realloc returned NULL)\n");
         return 0;
     }
 

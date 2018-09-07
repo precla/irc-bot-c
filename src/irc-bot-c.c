@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
     irc_session_t * s;
 
     if (argc != 2) {
-        printf("Usage: %s server.cfg\n", argv[0]);
+        fprintf(stdout, "Usage: %s server.cfg\n", argv[0]);
         exit(1);
     }
 
@@ -45,11 +45,11 @@ int main(int argc, char **argv) {
     /* open cfg file */
     FILE *f = fopen(argv[1], "r");
     if (!f) {
-        printf("Could not open %s\n", argv[1]);
+        fprintf(stderr, "Could not open %s\n", argv[1]);
         exit(1);
     }
 
-    printf("Config file %s loaded.\n", argv[1]);
+    fprintf(stdout, "Config file %s loaded.\n", argv[1]);
 
     char *checkCfgParameter = (char *)calloc(MAXLENGTH, sizeof(char));
     ucfg.botNick = (char *)calloc(MAXLENGTH, sizeof(char));
@@ -80,21 +80,21 @@ int main(int argc, char **argv) {
         }
     }
 
-    printf("bot nick: %s\nssl: %s\n", ucfg.botNick, ucfg.sslActivated);
-    printf("server: %s\nport: %d\n", ucfg.server, ucfg.port);
-    printf("channel(s): %s\nnickserv auth: ***\n", ucfg.channel);
+    fprintf(stdout, "bot nick: %s\nssl: %s\n", ucfg.botNick, ucfg.sslActivated);
+    fprintf(stdout, "server: %s\nport: %d\n", ucfg.server, ucfg.port);
+    fprintf(stdout, "channel(s): %s\nnickserv auth: ***\n", ucfg.channel);
     
     /* create the IRC session; 0 means error */
     s = irc_create_session(&callbacks);
 
     if (!s) {
-        printf("Could not create IRC session\n");
+        fprintf(stderr, "Could not create IRC session\n");
         fclose(f);
         free(checkCfgParameter);
         exit(1);
     }
 
-    printf("IRC session created\n");
+    fprintf(stdout, "IRC session created\n");
 
     irc_set_ctx(s, &ucfg);
     irc_option_set(s, LIBIRC_OPTION_STRIPNICKS);
@@ -123,17 +123,17 @@ int main(int argc, char **argv) {
 
     /* Initiate the IRC server connection */
     if (irc_connect(s, ucfg.server, ucfg.port, 0, ucfg.botNick, 0, 0)) {
-        printf("Could not connect: %s\n", irc_strerror(irc_errno(s)));
+        fprintf(stderr, "Could not connect: %s\n", irc_strerror(irc_errno(s)));
         fclose(f);
         free(checkCfgParameter);
         exit(1);
     }
 
-    printf("IRC server connection successfully created.\n");
+    fprintf(stdout, "IRC server connection successfully created.\n");
 
     /* and run into forever loop, generating events */
     if (irc_run(s)) {
-        printf("Could not connect or I/O error: %s\n", irc_strerror(irc_errno(s)));
+        fprintf(stderr, "Could not connect or I/O error: %s\n", irc_strerror(irc_errno(s)));
         fclose(f);
         free(checkCfgParameter);
         exit(1);

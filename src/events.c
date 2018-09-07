@@ -15,7 +15,7 @@ void event_connect(irc_session_t * session, const char * event, const char * ori
 
 void event_numeric(irc_session_t * session, unsigned int event, const char * origin, const char ** params, unsigned int count) {
     if (event > 400) {
-        printf("ERROR %u: %s: %s %s %s %s\n",
+        fprintf(stderr, "ERROR %u: %s: %s %s %s %s\n",
             event,
             origin ? origin : "unknown",
             params[0],
@@ -32,7 +32,7 @@ void event_channel(irc_session_t * session, const char * event, const char * ori
 
     clock_t startTime = clock();
 
-    printf("Checking if the following parameter triggers any function: %s\n" , params[1]);
+    fprintf(stdout, "Checking if the following parameter triggers any function: %s\n" , params[1]);
 
     if (!strncmp(params[1], "!sysinfo", 9)) {
         fprintf(stdout, "match for !sysinfo... getting data ready");
@@ -111,7 +111,7 @@ skip_rest_of_special_domains: ;
         return;
     }
 
-    printf("No trigger for this message.\n");
+    fprintf(stdout, "No trigger for this message.\n");
     return;
 }
 
@@ -133,7 +133,7 @@ void event_notice(irc_session_t *session, const char *event, const char *origin,
         sprintf(buf, "IDENTIFY %s", ucfg.nickservPassword);
         irc_cmd_msg(session, "nickserv", buf);
     } else if (strstr(params[1], "Password accepted - you are now recognized") == params[1]) {
-        printf("Nickserv authentication succeed.");
+        fprintf(stdout, "Nickserv authentication succeed.");
     }
 }
 
