@@ -155,11 +155,9 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
     char *end = strstr(htmlData, "</title>");
 
     /* Fix if there are whitespace characters at the start of the title */
-    char *cleanText = start;
-    while (cleanText < end && isspace(*cleanText)) {
-        ++cleanText;
+    while (start < end && isspace(*start)) {
+        ++start;
     }
-    start = cleanText;
 
     char *title = (char *)calloc(512, sizeof(char));
     strncat(title, "URL: ", 6);
