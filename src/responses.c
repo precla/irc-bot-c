@@ -1,20 +1,23 @@
 #include "responses.h"
 
 /* Max amount of matches with regexec()*/
-#define MAX_MATCHED 1
+#define MAX_MATCHED                 1
 
 /* TITLE_TAG_LENGTH -> length of the "<title>" tag */
-#define TITLE_TAG_LENGTH 7
+#define TITLE_TAG_LENGTH            7
+
+/* TITLE_TAG_LENGTH -> length of "title\":\"" */
+#define TITLE_TAG_YOUTUBE_LENGTH    18
 
 /* Length of text that comes before the like rating */
-#define LIKE_LENGTH 43
+#define LIKE_LENGTH                 69
+
 /* Length of text that comes before the dislike rating */
-#define DISLIKE_LENGTH 45
-/* percentage with comma, forexample: 78.12 */
-#define PERCENTAGE 5
+#define DISLIKE_LENGTH              72
+
 /* Length of rating tag + rating -> '"ratingValue": "7.7"'*/
-#define RATING_LENGTH_START 16
-#define RATING_LENGTH_END 19
+#define RATING_LENGTH_START         16
+#define RATING_LENGTH_END           19
 
 struct MemoryStruct {
     char *memory;
@@ -26,7 +29,7 @@ size_t write_response(void *ptr, size_t size, size_t nmemb, char *str) {
     struct MemoryStruct *mem = (struct MemoryStruct *)str;
 
     mem->memory = realloc(mem->memory, mem->size + realsize + 1);
-    if(mem->memory == NULL) {
+    if (mem->memory == NULL) {
         /* out of memory! */ 
         fprintf(stderr, "not enough memory (realloc returned NULL)\n");
         return 0;
@@ -45,7 +48,7 @@ int check_message_for_url(const char *inputText) {
      */
     const char *httpPattern = "http(s?):[^[:space:]]+";
 
-    if(search_pattern(inputText, httpPattern)){
+    if (search_pattern(inputText, httpPattern)){
         fprintf(stderr, "'%s' is not an URL.\nNo match for '%s'\n", inputText, httpPattern);
         return 1;
     }
@@ -64,7 +67,7 @@ int search_pattern(const char *str, const char *pattern) {
     regex_t reg;
 
     regreturn = regcomp(&reg, pattern, REG_EXTENDED | REG_NOSUB);
-    if(regreturn){
+    if (regreturn){
         /* error while compiling a regular expression.
          * stop here, return with 1 to indicate an error
          */
@@ -142,24 +145,36 @@ char *grab_url_data(const char *url, const short specialDomain) {
 }
 
 char *find_title_tag(char *htmlData, const short specialDomain) {
-    const char *pattern = "<title>";
+    const char  *pattern = "<title>";
+    char        *start;
+    char        *end;
+    char        *title;
 
-    if (search_pattern(htmlData, pattern)) {
-        fprintf(stderr, "No title tag found");
-        return NULL;
+    /* for the special-snowflake YouTube ... */
+    if (specialDomain == YOUTUBE){
+        /* title\":\"Mile Kekin - Takav par (Official Video)\",\"lengthSeconds\":\"235\",\"channelId
+         */
+        start = strstr(htmlData, "document.title = \"") + TITLE_TAG_YOUTUBE_LENGTH;
+        end = strstr(start, "\n") - 2;      // move back by 2, so it doesn't print ";\n"
+
+    } else {
+        if (search_pattern(htmlData, pattern)) {
+            fprintf(stderr, "No title tag found");
+            return NULL;
+        }
+
+        start = strstr(htmlData, "<title>");
+        /* move by <title> tag length */
+        start = start + TITLE_TAG_LENGTH;
+        end = strstr(htmlData, "</title>");
     }
-
-    char *start = strstr(htmlData, "<title>");
-    /* move by <title> tag length */
-    start = start + TITLE_TAG_LENGTH;
-    char *end = strstr(htmlData, "</title>");
 
     /* Fix if there are whitespace characters at the start of the title */
     while (start < end && isspace(*start)) {
         ++start;
     }
 
-    char *title = (char *)calloc(512, sizeof(char));
+    title = (char *)calloc(512, sizeof(char));
     strncat(title, "URL: ", 6);
     strncat(title, start, (size_t)(end - start) % 250);
 
@@ -167,41 +182,43 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
      * stands for what url in 'matchedUrlIndex'
      */
     if (specialDomain == YOUTUBE) {
-        start = strstr(htmlData, "video-extras-sparkbar-likes");
-        if(start && end){
+        start = strstr(htmlData,
+                    "LIKE\"},\"defaultText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"");
+        if (start && end){
             start = start + LIKE_LENGTH;
-            end = strstr(start, "%%");
+            end = strstr(start, " ");
 
             char *likes = (char *)calloc(14, sizeof(char));
-            if(likes == NULL){
+            if (likes == NULL){
                 return title;
             }
-            strncat(likes, start, PERCENTAGE);
-            strncat(likes, "%% likes /", 14);
+            strncat(likes, start, end - start);
+            strncat(likes, " likes / ", 10);
 
             /* start searching from previous 'start' - no need to go trough the whole htmlData
             * since the 'dislike' data comes after the 'like' data
             */
-            start = strstr(start, "video-extras-sparkbar-dislikes");
+            start = strstr(start,
+                        "DISLIKE\"},\"defaultText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"");
             start = start + DISLIKE_LENGTH;
-            end = strstr(start, "%%");
+            end = strstr(start, " ");
         
             char *dislikes = (char *)calloc(12, sizeof(char));
-            if(dislikes == NULL){
+            if (dislikes == NULL){
                 free(likes);
                 return title;
             }
-            strncat(dislikes, start, PERCENTAGE);
-            strncat(dislikes, "%% dislikes", 12);
+            strncat(dislikes, start, end - start);
+            strncat(dislikes, " dislikes", 11);
 
             title = strncat(title, " | ", 4);
-            title = strncat(title, likes, 4);
-            title = strncat(title, dislikes, 4);
+            title = strncat(title, likes, strlen(likes));
+            title = strncat(title, dislikes, strlen(dislikes));
             free(dislikes);
             free(likes);
         }
     } else if (specialDomain == IMDB) {
-        if(strstr(htmlData, "notEnoughRatings")){
+        if (strstr(htmlData, "notEnoughRatings")){
             /* 13 - length of " - no rating" */
             strncat(title, " - no rating", 13);
             return title;
