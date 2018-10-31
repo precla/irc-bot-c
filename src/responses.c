@@ -9,6 +9,9 @@
 /* TITLE_TAG_LENGTH -> length of "title\":\"" */
 #define TITLE_TAG_YOUTUBE_LENGTH    18
 
+/* max characters for likes/dislikes to append */
+#define YT_RATING_LENGTH            16
+
 /* Length of text that comes before the like rating */
 #define LIKE_LENGTH                 69
 
@@ -158,7 +161,7 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
 
     } else {
         const char *titleTag = "<title>";
-        
+
         if (search_pattern(htmlData, titleTag)) {
             fprintf(stderr, "No title tag found");
             return NULL;
@@ -175,9 +178,14 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
         ++start;
     }
 
+    /* max length of title will be:
+     * 6 + 256 + 36
+     * in case it checks for yt links
+     * all others will be shorter
+     */
     title = (char *)calloc(512, sizeof(char));
     strncat(title, "URL: ", 6);
-    strncat(title, start, (size_t)(end - start) % 250);
+    strncat(title, start, (size_t)(end - start) % 256);
 
     /* see 'enum special_domains' to check what index 
      * stands for what url in 'matchedUrlIndex'
@@ -213,8 +221,8 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
             strncat(dislikes, " dislikes", 11);
 
             title = strncat(title, " | ", 4);
-            title = strncat(title, likes, strlen(likes));
-            title = strncat(title, dislikes, strlen(dislikes));
+            title = strncat(title, likes, YT_RATING_LENGTH);
+            title = strncat(title, dislikes, YT_RATING_LENGTH);
             free(dislikes);
             free(likes);
         }
