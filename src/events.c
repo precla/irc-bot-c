@@ -41,7 +41,7 @@ void event_channel(irc_session_t * session, const char * event, const char * ori
         if (!sysinfo(&info)) {
             char *infoData;
 
-            if ((infoData = (char*)malloc(sizeof(char*) * 128)) == NULL){
+            if ((infoData = (char*)malloc(sizeof(char) * 128)) == NULL){
                 fprintf(stderr, "Error in malloc() for !sysinfo call.\n");
                 return;
             }
