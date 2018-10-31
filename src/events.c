@@ -89,19 +89,14 @@ void event_channel(irc_session_t * session, const char * event, const char * ori
         short specialDomain = -1;
 
         /* check if yt link, except channel links */
-        if(search_special_domains(params[1], "(www.)?youtu(.)?be(.com)?[^[:space:]]+") == 0){
+        if (search_special_domains(params[1],
+                    "(www.)?youtu(.)?be(.com)?[^[:space:]]+") == 0){
             specialDomain = 0;
-            goto skip_rest_of_special_domains;
-        }
-
-
-        /* check if imdb link - only for movies/shows/etc., not for actors or similiar */
-        if(search_special_domains(params[1], "(www.)?imdb.com[[:punct:]]title[^[:space:]]+") == 0){
+        } else if (search_special_domains(params[1],
+                    "(www.)?imdb.com[[:punct:]]title[^[:space:]]+") == 0){
             specialDomain = 1;
-            goto skip_rest_of_special_domains;
         }
 
-skip_rest_of_special_domains: ;
         char *messageToIrc = grab_url_data(params[1], specialDomain);
 
         irc_cmd_msg(session, params[0], messageToIrc);
