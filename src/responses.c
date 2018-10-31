@@ -20,8 +20,8 @@
 #define RATING_LENGTH_END           19
 
 struct MemoryStruct {
-    char *memory;
-    size_t size;
+    char    *memory;
+    size_t  size;
 };
 
 size_t write_response(void *ptr, size_t size, size_t nmemb, char *str) {
@@ -63,7 +63,7 @@ int search_pattern(const char *str, const char *pattern) {
      * no need for two separate variables since they won't
      * be used at the same time.
      */
-    int regreturn;
+    int     regreturn;
     regex_t reg;
 
     regreturn = regcomp(&reg, pattern, REG_EXTENDED | REG_NOSUB);
@@ -102,7 +102,7 @@ int search_special_domains(const char *url, const char *pattern){
 }
 
 char *grab_url_data(const char *url, const short specialDomain) {
-    CURL *curl = curl_easy_init();
+    CURL *curl  = curl_easy_init();
     char *title = NULL;
 
     if (curl) {
@@ -229,7 +229,7 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
 
         if (start && end){
             char *rating = (char *)calloc(4, sizeof(char));
-            if(rating == NULL){
+            if (rating == NULL){
                 return title;
             }
             strncat(rating, start, (size_t)(end - start) % 4);

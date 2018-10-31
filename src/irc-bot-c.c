@@ -23,8 +23,8 @@
 user_config ucfg;
 
 int main(int argc, char **argv) {
-    irc_callbacks_t	callbacks;
-    irc_session_t * s;
+    irc_callbacks_t callbacks;
+    irc_session_t   *s;
 
     if (argc != 2) {
         fprintf(stdout, "Usage: %s server.cfg\n", argv[0]);
