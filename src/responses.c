@@ -145,7 +145,6 @@ char *grab_url_data(const char *url, const short specialDomain) {
 }
 
 char *find_title_tag(char *htmlData, const short specialDomain) {
-    const char  *pattern = "<title>";
     char        *start;
     char        *end;
     char        *title;
@@ -158,12 +157,14 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
         end = strstr(start, "\n") - 2;      // move back by 2, so it doesn't print ";\n"
 
     } else {
-        if (search_pattern(htmlData, pattern)) {
+        const char *titleTag = "<title>";
+        
+        if (search_pattern(htmlData, titleTag)) {
             fprintf(stderr, "No title tag found");
             return NULL;
         }
 
-        start = strstr(htmlData, "<title>");
+        start = strstr(htmlData, titleTag);
         /* move by <title> tag length */
         start = start + TITLE_TAG_LENGTH;
         end = strstr(htmlData, "</title>");
