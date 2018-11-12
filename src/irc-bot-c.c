@@ -80,9 +80,8 @@ int main(int argc, char **argv) {
         }
     }
 
-    fprintf(stdout, "bot nick: %s\nssl: %s\n", ucfg.botNick, ucfg.sslActivated);
-    fprintf(stdout, "server: %s\nport: %d\n", ucfg.server, ucfg.port);
-    fprintf(stdout, "channel(s): %s\nnickserv auth: ***\n", ucfg.channel);
+    fprintf(stdout, "bot nick: %s\nssl: %s\nserver: %s\nport: %d\nchannel(s): %s\nnickserv auth: ***\n",
+                    ucfg.botNick, ucfg.sslActivated, ucfg.server, ucfg.port, ucfg.channel);
     
     /* create the IRC session; 0 means error */
     s = irc_create_session(&callbacks);
