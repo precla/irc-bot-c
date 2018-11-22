@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
     }
 
     irc_destroy_session(s);
-    free(checkCfgParameter);
     fclose(f);
+    free(checkCfgParameter);    
     exit(0);
 }
