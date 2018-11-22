@@ -123,6 +123,7 @@ int main(int argc, char **argv) {
     /* Initiate the IRC server connection */
     if (irc_connect(s, ucfg.server, ucfg.port, 0, ucfg.botNick, 0, 0)) {
         fprintf(stderr, "Could not connect: %s\n", irc_strerror(irc_errno(s)));
+        irc_destroy_session(s);
         fclose(f);
         free(checkCfgParameter);
         exit(1);
@@ -133,11 +134,13 @@ int main(int argc, char **argv) {
     /* and run into forever loop, generating events */
     if (irc_run(s)) {
         fprintf(stderr, "Could not connect or I/O error: %s\n", irc_strerror(irc_errno(s)));
+        irc_destroy_session(s);
         fclose(f);
         free(checkCfgParameter);
         exit(1);
     }
 
+    irc_destroy_session(s);
     free(checkCfgParameter);
     fclose(f);
     exit(0);
