@@ -9,9 +9,10 @@ SRCTOOBJ = $(patsubst %.c,%.o, $(SRC))
 #SRCTOOBJDEV = $(patsubst %.c,%.o, $(SRC))
 DEST = build/
 
-default: $(TARGET)
-all: default
-debug: $(TARGET_DEBUG)
+.PHONY default: $(TARGET)
+.PHONY all: default
+.PHONY debug: $(TARGET_DEBUG)
+.PHONY clean: clean
 
 # build for production, with optimization flag:
 $(TARGET): $(SRCTOOBJ)
