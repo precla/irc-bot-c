@@ -3,7 +3,7 @@ TARGET_DEBUG = irc-bot-c_dev
 CC = gcc
 CFLAGS = -Wall -std=c18 -pedantic
 BUILD = -O2
-LDFLAGS = -lcurl -lircclient -lcrypto -lssl
+LDLIBS = -lcurl -lircclient -lcrypto -lssl
 SRC = $(wildcard *.c)
 SRCTOOBJ = $(patsubst %.c,%.o, $(SRC))
 #SRCTOOBJDEV = $(patsubst %.c,%.o, $(SRC))
@@ -16,7 +16,7 @@ debug: $(TARGET_DEBUG)
 # build for production, with optimization flag:
 $(TARGET): $(SRCTOOBJ)
 	mkdir -p $(DEST)
-	$(CC) $(CFLAGS) -o $(DEST)$@ $(SRCTOOBJ) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $(DEST)$@ $(SRCTOOBJ) $(LDLIBS)
 	-rm *.o
 
 $(SRCTOOBJ): %.o: %.c
@@ -24,7 +24,7 @@ $(SRCTOOBJ): %.o: %.c
 
 # build for debug, with debug flag:
 #$(TARGET_DEBUG): $(SRCTOOBJDEV)
-#	$(CC) $(CFLAGS) -g -o $(DEST)$@ $(SRCTOOBJDEV) $(LDFLAGS)
+#	$(CC) $(CFLAGS) -g -o $(DEST)$@ $(SRCTOOBJDEV) $(LDLIBS)
 #	-rm *.o
 
 #$(SRCTOOBJDEV): %.o: %.c
