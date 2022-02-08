@@ -6,31 +6,31 @@ BUILD = -O2
 LDLIBS = -lcurl -lircclient -lcrypto -lssl
 SRC = $(wildcard *.c)
 SRCTOOBJ = $(patsubst %.c,%.o, $(SRC))
-#SRCTOOBJDEV = $(patsubst %.c,%.o, $(SRC))
+SRCTOOBJDEV = $(patsubst %.c,%.o, $(SRC))
 DEST = build/
 
-.PHONY default: $(TARGET)
+.PHONY default: t_prod
 .PHONY all: default
-.PHONY debug: $(TARGET_DEBUG)
+.PHONY debug: t_dev
 .PHONY clean: clean
 
 # build for production, with optimization flag:
-$(TARGET): $(SRCTOOBJ)
+t_prod: $(SRCTOOBJ)
 	mkdir -p $(DEST)
-	$(CC) $(CFLAGS) -o $(DEST)$@ $(SRCTOOBJ) $(LDLIBS)
+	$(CC) $(CFLAGS) -o $(DEST)$(TARGET) $(SRCTOOBJ) $(LDLIBS)
 	-rm *.o
 
 $(SRCTOOBJ): %.o: %.c
 	$(CC) $(CFLAGS) $(BUILD) -c $< -o $@
 
 # build for debug, with debug flag:
-#$(TARGET_DEBUG): $(SRCTOOBJDEV)
-#	$(CC) $(CFLAGS) -g -o $(DEST)$@ $(SRCTOOBJDEV) $(LDLIBS)
-#	-rm *.o
+t_dev: $(SRCTOOBJDEV)
+	$(CC) $(CFLAGS) -g -o $(DEST)$(TARGET_DEBUG) $(SRCTOOBJDEV) $(LDLIBS)
+	-rm *.o
 
-#$(SRCTOOBJDEV): %.o: %.c
-#	$(CC) $(CFLAGS) -g -c $< -o $@
+$(SRCTOOBJDEV): %.o: %.c
+	$(CC) $(CFLAGS) -g -c $< -o $@
 
 # clean up the mess
 clean:
-	-rm *.o $(DEST)$(TARGET)
+	-rm -rf $(DEST)
