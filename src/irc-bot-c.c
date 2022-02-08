@@ -106,10 +106,10 @@ int main(int argc, char **argv) {
         char *sslServer = (char *)malloc(strlen(ucfg.server) + 2);
         strcpy(sslServer, "#");
         strcat(sslServer, ucfg.server);
-        /* todo: fix ssl initialization fail
+        /* todo: fix ssl initialization fail */
         ucfg.server = (char *)malloc(strlen(sslServer) + 1);
         strcpy(ucfg.server, sslServer);
-        */
+
         free(sslServer);
 
         /* To handle the "SSL certificate verify failed" 
