@@ -80,8 +80,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    fprintf(stdout, "bot nick: %s\nssl: %s\nserver: %s\nport: %d\nchannel(s): %s\nnickserv auth: ***\n",
-                    ucfg.botNick, ucfg.sslActivated, ucfg.server, ucfg.port, ucfg.channel);
     
     /* create the IRC session; 0 means error */
     s = irc_create_session(&callbacks);
@@ -106,7 +104,8 @@ int main(int argc, char **argv) {
         char *sslServer = (char *)malloc(strlen(ucfg.server) + 2);
         strcpy(sslServer, "#");
         strcat(sslServer, ucfg.server);
-        /* todo: fix ssl initialization fail */
+
+        /* TODO: fix ssl initialization fail */
         ucfg.server = (char *)malloc(strlen(sslServer) + 1);
         strcpy(ucfg.server, sslServer);
 
@@ -120,14 +119,19 @@ int main(int argc, char **argv) {
         }
     }
 
+    fprintf(stdout, "bot nick: %s\nssl: %s\nserver: %s\nport: %d\nchannel(s): %s\nnickserv auth: ***\n",
+                    ucfg.botNick, ucfg.sslActivated, ucfg.server, ucfg.port, ucfg.channel);
+
     /* Initiate the IRC server connection */
-    if (irc_connect(s, ucfg.server, ucfg.port, 0, ucfg.botNick, 0, 0)) {
+    if (irc_connect(s, ucfg.server, ucfg.port, ucfg.nickservPassword, ucfg.botNick, 0, 0)) {
         fprintf(stderr, "Could not connect: %s\n", irc_strerror(irc_errno(s)));
         irc_destroy_session(s);
         fclose(f);
         free(checkCfgParameter);
         exit(1);
     }
+
+    free(ucfg.nickservPassword);
 
     fprintf(stdout, "IRC server connection successfully created.\n");
 
