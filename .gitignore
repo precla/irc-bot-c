@@ -1,5 +1,7 @@
 src/build/
+src/.kdev4/
 .vscode/
+*.kdev4
 *.o
 server.cfg
 TODO
