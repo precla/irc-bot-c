@@ -79,15 +79,14 @@ int main(int argc, char **argv) {
             fscanf(f, " %96s", ucfg.nickservPassword);
         }
     }
+    free(checkCfgParameter);
 
-    
     /* create the IRC session; 0 means error */
     s = irc_create_session(&callbacks);
 
     if (!s) {
         fprintf(stderr, "Could not create IRC session\n");
         fclose(f);
-        free(checkCfgParameter);
         exit(1);
     }
 
@@ -127,7 +126,6 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Could not connect: %s\n", irc_strerror(irc_errno(s)));
         irc_destroy_session(s);
         fclose(f);
-        free(checkCfgParameter);
         exit(1);
     }
 
@@ -140,12 +138,10 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Could not connect or I/O error: %s\n", irc_strerror(irc_errno(s)));
         irc_destroy_session(s);
         fclose(f);
-        free(checkCfgParameter);
         exit(1);
     }
 
     irc_destroy_session(s);
     fclose(f);
-    free(checkCfgParameter);    
     exit(0);
 }
