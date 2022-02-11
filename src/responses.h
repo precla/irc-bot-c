@@ -13,15 +13,11 @@
 /* libcurl - curl.haxx.se/libcurl/ */
 #include <curl/curl.h>
 
-/* libircclient - ulduzsoft.com/libircclient/ */
-#include <libircclient/libircclient.h>
-#include <libircclient/libirc_rfcnumeric.h>
-
 #include "structs.h"
 
 /* special domains with extendend featuers
- * for Youtube: get likes and dislikes
- * imdb: get rating
+ * for Youtube: get likes, rating, etc.
+ * imdb: get rating, plot, etc.
  */
 enum special_domains {
     YOUTUBE,

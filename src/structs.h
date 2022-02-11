@@ -6,5 +6,5 @@ typedef struct {
                     *channel,
                     *nickservPassword;
     unsigned short  port;
-    char            sslActivated[3];
+    char            sslActivated;
 } user_config;

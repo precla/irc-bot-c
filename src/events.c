@@ -2,6 +2,11 @@
 
 extern user_config ucfg;
 
+void interpret_message(tokarr msg) {
+
+}
+
+/*
 void event_join(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count) {
     if (!origin) {
         return;
@@ -48,11 +53,11 @@ void event_channel(irc_session_t * session, const char * event, const char * ori
 
             int ret = snprintf(infoData, 128,
                                 "Uptime: %ld h %ld m %ld s, RAM: %lu / %lu MB (used/total)",
-                                info.uptime / 3600,                             /* uptime hrs */
-                                (info.uptime % 3600) / 60,                      /* uptime min */
-                                info.uptime % 60,                               /* uptime sec */
-                                (info.totalram - info.freeram) / (1024*1024),   /* get in MB */
-                                info.totalram / (1024*1024));                   /* get in MB */
+                                info.uptime / 3600,                             /* uptime hrs * /
+                                (info.uptime % 3600) / 60,                      /* uptime min * /
+                                info.uptime % 60,                               /* uptime sec * /
+                                (info.totalram - info.freeram) / (1024*1024),   /* get in MB * /
+                                info.totalram / (1024*1024));                   /* get in MB * /
 
             if (ret >= 0 && ret < 128){
                 irc_cmd_msg(session, params[0], infoData);
@@ -85,10 +90,10 @@ void event_channel(irc_session_t * session, const char * event, const char * ori
         * if we have a match of a special domain, skip the
         * rest of the checks, goto should be faster than
         * comparing with if(specialdomain != -1 &&..)
-        */
+        * /
         short specialDomain = -1;
 
-        /* check if yt link, except channel links */
+        /* check if yt link, except channel links * /
         if (search_special_domains(params[1],
                     "(www.)?youtu(.)?be(.com)?[^[:space:]]+") == 0){
             specialDomain = 0;
@@ -113,7 +118,7 @@ void event_channel(irc_session_t * session, const char * event, const char * ori
 /*
     nickserv auth taken from: https://www.ulduzsoft.com/libircclient/index.html#how-to-register-auth-with-nickserv
     no need to reinvent the wheel by myself..
-*/
+* /
 void event_notice(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count) {
     char buf[256];
 
@@ -135,3 +140,5 @@ void event_notice(irc_session_t *session, const char *event, const char *origin,
 void event_privmsg(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count) {
     irc_cmd_msg(session, origin, "Hi, I'm a bot.");
 }
+
+*/

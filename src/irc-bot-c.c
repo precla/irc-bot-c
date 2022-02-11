@@ -1,52 +1,46 @@
-#define _POSIX_C_SOURCE 200809L
-
+#include <errno.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <string.h>
-#include <stddef.h>
 
 /* libcurl - curl.haxx.se/libcurl/ */
 #include <curl/curl.h>
 
-/* libircclient - ulduzsoft.com/libircclient/ */
-#include <libircclient/libircclient.h>
-#include <libircclient/libirc_rfcnumeric.h>
+/* libsrsirc - https://github.com/fstd/libsrsirc */
+#include <libsrsirc/irc.h>
+#include <libsrsirc/irc_ext.h>
 
 #include "events.h"
 #include "responses.h"
 #include "structs.h"
 
-#define MAXLENGTH 128
+#define MAXLENGTH 255
+#define STRLENGTH(x) STRLENGTHVAL(x)
+#define STRLENGTHVAL(x) #x
 
 /* global variable with settings */
 user_config ucfg;
 
+void cleanupcfg () {
+    free(ucfg.botNick);
+    free(ucfg.channel);
+    free(ucfg.server);
+}
+
 int main(int argc, char **argv) {
-    irc_callbacks_t callbacks;
-    irc_session_t   *s;
+    irc *ircs = irc_init();
 
     if (argc != 2) {
         fprintf(stdout, "Usage: %s server.cfg\n", argv[0]);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
-
-    /* Initialize the callbacks */
-    memset(&callbacks, 0, sizeof(callbacks));
-
-    /* Set up the callbacks we will use */
-    callbacks.event_connect = event_connect;
-    callbacks.event_join = event_join;
-    callbacks.event_numeric = event_numeric;
-    callbacks.event_channel = event_channel;
-    callbacks.event_notice = event_notice;
-    callbacks.event_privmsg = event_privmsg;
 
     /* open cfg file */
     FILE *f = fopen(argv[1], "r");
     if (!f) {
         fprintf(stderr, "Could not open %s\n", argv[1]);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     fprintf(stdout, "Config file %s loaded.\n", argv[1]);
@@ -58,90 +52,68 @@ int main(int argc, char **argv) {
     ucfg.nickservPassword = (char *)calloc(MAXLENGTH, sizeof(char));
 
     while (!feof(f)) {
-        fscanf(f, "%96s", checkCfgParameter);
+        fscanf(f, "%" STRLENGTH(MAXLENGTH) "s", checkCfgParameter);
 
         if (!strcmp(checkCfgParameter, "bot_nick")) {
-            fscanf(f, " %96s", ucfg.botNick);
-
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.botNick);
         } else if (!strcmp(checkCfgParameter, "server")) {
-            fscanf(f, " %96s", ucfg.server);
-
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.server);
         } else if (!strcmp(checkCfgParameter, "port")) {
             fscanf(f, " %hu", &ucfg.port);
-
-        } else if (!strcmp(checkCfgParameter, "channel")) {
-            fscanf(f, " %96s", ucfg.channel);
-
         } else if (!strcmp(checkCfgParameter, "ssl")) {
-            fscanf(f, " %96s", ucfg.sslActivated);
-
+            fscanf(f, " %c", &ucfg.sslActivated);
+        } else if (!strcmp(checkCfgParameter, "channel")) {
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.channel);
         } else if (!strcmp(checkCfgParameter, "nickserv_auth")) {
-            fscanf(f, " %96s", ucfg.nickservPassword);
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.nickservPassword);
         }
     }
+    /* clear cfg stuff, especially to not have the password in memory */
     free(checkCfgParameter);
+    fclose(f);
 
-    /* create the IRC session; 0 means error */
-    s = irc_create_session(&callbacks);
+    irc_set_server(ircs, ucfg.server, (uint16_t)ucfg.port);
+    irc_set_nick(ircs, ucfg.botNick);
+    irc_set_pass(ircs, ucfg.nickservPassword);
 
-    if (!s) {
-        fprintf(stderr, "Could not create IRC session\n");
-        fclose(f);
-        exit(1);
+    if (ucfg.sslActivated == 'y') {
+        irc_set_ssl(ircs, true);
     }
 
-    fprintf(stdout, "IRC session created\n");
-
-    irc_set_ctx(s, &ucfg);
-    irc_option_set(s, LIBIRC_OPTION_STRIPNICKS);
-
-    if (ucfg.sslActivated[0] == 'y') {
-        /* If SSL connection required, add '#' at the beginning of the server
-         * Create new string with # at beginning, append server to it.
-         * copy the new string into the old ucfg.server string.
-         */
-        char *sslServer = (char *)malloc(strlen(ucfg.server) + 2);
-        strcpy(sslServer, "#");
-        strcat(sslServer, ucfg.server);
-
-        /* TODO: fix ssl initialization fail */
-        ucfg.server = (char *)malloc(strlen(sslServer) + 1);
-        strcpy(ucfg.server, sslServer);
-
-        free(sslServer);
-
-        /* To handle the "SSL certificate verify failed" 
-         * do not verify the ssl cert if 'v' is not set
-         */
-        if (ucfg.sslActivated[1] != 'v') {
-            irc_option_set(s, LIBIRC_OPTION_SSL_NO_VERIFY);
-        }
-    }
-
-    fprintf(stdout, "bot nick: %s\nssl: %s\nserver: %s\nport: %d\nchannel(s): %s\nnickserv auth: ***\n",
-                    ucfg.botNick, ucfg.sslActivated, ucfg.server, ucfg.port, ucfg.channel);
-
-    /* Initiate the IRC server connection */
-    if (irc_connect(s, ucfg.server, ucfg.port, ucfg.nickservPassword, ucfg.botNick, 0, 0)) {
-        fprintf(stderr, "Could not connect: %s\n", irc_strerror(irc_errno(s)));
-        irc_destroy_session(s);
-        fclose(f);
-        exit(1);
-    }
-
+    /* clear the password from memory */
     free(ucfg.nickservPassword);
+
+    fprintf(stdout, "bot nick: %s\nserver: %s\nport: %u\nchannel(s): %s\nnickserv auth: ***\n",
+                    ucfg.botNick, ucfg.server, ucfg.port, ucfg.channel);
+
+    /* connect to the IRC network */
+    if (!irc_connect(ircs)) {
+        fprintf(stderr, "Could not connect or logon. Maybe check config file? %s\n", argv[1]);
+        cleanupcfg();
+        exit(EXIT_FAILURE);
+    }
 
     fprintf(stdout, "IRC server connection successfully created.\n");
 
-    /* and run into forever loop, generating events */
-    if (irc_run(s)) {
-        fprintf(stderr, "Could not connect or I/O error: %s\n", irc_strerror(irc_errno(s)));
-        irc_destroy_session(s);
-        fclose(f);
-        exit(1);
+    irc_printf(ircs, "JOIN %s", ucfg.channel);
+
+    /* and run into *forever* loop */
+    while (irc_online(ircs)) {
+        tokarr msg;
+        int r = irc_read(ircs, &msg, 500000);
+
+        /* read failure, possible connection closed ? */
+        if (r < 0) {
+            break;
+        }
+        /* read timeout */
+        if (r == 0) {
+            continue;
+        }
+        interpret_message(msg);
     }
 
-    irc_destroy_session(s);
-    fclose(f);
-    exit(0);
+    cleanupcfg();
+    irc_dispose(ircs);
+    exit(EXIT_SUCCESS);
 }

@@ -1,13 +1,13 @@
 TARGET = irc-bot-c
 CC = gcc
 CFLAGS = -Wall -std=c18 -pedantic
-LDLIBS = -lcurl -lircclient -lcrypto -lssl
+LDLIBS = -lcurl -lsrsirc -lcrypto -lssl
 SRC = $(wildcard *.c)
 SRCTOOBJ = $(patsubst %.c,%.o, $(SRC))
 DEST = build
 
-debug: CFLAGS += -g
 default: CFLAGS += -O2
+debug: CFLAGS += -g
 
 default: $(SRCTOOBJ)
 	mkdir -p $(DEST)
