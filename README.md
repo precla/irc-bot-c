@@ -17,7 +17,7 @@ irc-bot-c is a simple IRC bot with basic functionalities, same as my irc-bot-nod
 
 ## Dependencies:
 - libcurl: https://curl.haxx.se/libcurl/
-- libircclient: https://sourceforge.net/projects/libircclient/
+- libsrsirc: https://github.com/fstd/libsrsirc/
 
 ### License:
 - GNU GPL v3
