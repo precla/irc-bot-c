@@ -61,7 +61,8 @@ int check_message_for_url(const char *inputText) {
 }
 
 int search_pattern(const char *str, const char *pattern) {
-    /* use 'regreturn' as the regcomp() return value,
+    /*
+     * use 'regreturn' as the regcomp() return value,
      * but also as the return value of regexec().
      * no need for two separate variables since they won't
      * be used at the same time.
@@ -178,16 +179,18 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
         ++start;
     }
 
-    /* max length of title will be:
+    /*
+     * max length of title will be:
      * 6 + 256 + 36
      * in case it checks for yt links
      * all others will be shorter
      */
-    title = (char *)calloc(512, sizeof(char));
+    title = calloc(512, sizeof(char));
     strncat(title, "URL: ", 6);
     strncat(title, start, (size_t)(end - start) % 256);
 
-    /* see 'enum special_domains' to check what index 
+    /*
+     * see 'enum special_domains' to check what index
      * stands for what url in 'matchedUrlIndex'
      */
     if (specialDomain == YOUTUBE) {
@@ -197,22 +200,23 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
             start = start + LIKE_LENGTH;
             end = strstr(start, " ");
 
-            char *likes = (char *)calloc(14, sizeof(char));
+            char *likes = calloc(14, sizeof(char));
             if (likes == NULL){
                 return title;
             }
             strncat(likes, start, end - start);
             strncat(likes, " likes / ", 10);
 
-            /* start searching from previous 'start' - no need to go trough the whole htmlData
-            * since the 'dislike' data comes after the 'like' data
-            */
+            /*
+             * start searching from previous 'start' - no need to go trough the whole htmlData
+             * since the 'dislike' data comes after the 'like' data
+             */
             start = strstr(start,
                         "DISLIKE\"},\"defaultText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"");
             start = start + DISLIKE_LENGTH;
             end = strstr(start, " ");
         
-            char *dislikes = (char *)calloc(12, sizeof(char));
+            char *dislikes = calloc(12, sizeof(char));
             if (dislikes == NULL){
                 free(likes);
                 return title;
@@ -237,7 +241,7 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
         end = start + RATING_LENGTH_END;
 
         if (start && end){
-            char *rating = (char *)calloc(4, sizeof(char));
+            char *rating = calloc(4, sizeof(char));
             if (rating == NULL){
                 return title;
             }

@@ -1,32 +1,4 @@
-#include <errno.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-/* libcurl - curl.haxx.se/libcurl/ */
-#include <curl/curl.h>
-
-/* libsrsirc - https://github.com/fstd/libsrsirc */
-#include <libsrsirc/irc.h>
-#include <libsrsirc/irc_ext.h>
-
-#include "events.h"
-#include "responses.h"
-#include "structs.h"
-
-#define MAXLENGTH 255
-#define STRLENGTH(x) STRLENGTHVAL(x)
-#define STRLENGTHVAL(x) #x
-
-/* global variable with settings */
-user_config ucfg;
-
-void cleanupcfg () {
-    free(ucfg.botNick);
-    free(ucfg.channel);
-    free(ucfg.server);
-}
+#include "irc-bot-c.h"
 
 int main(int argc, char **argv) {
     irc *ircs = irc_init();
@@ -45,11 +17,12 @@ int main(int argc, char **argv) {
 
     fprintf(stdout, "Config file %s loaded.\n", argv[1]);
 
-    char *checkCfgParameter = (char *)calloc(MAXLENGTH, sizeof(char));
-    ucfg.botNick = (char *)calloc(MAXLENGTH, sizeof(char));
-    ucfg.server = (char *)calloc(MAXLENGTH, sizeof(char));
-    ucfg.channel = (char *)calloc(MAXLENGTH, sizeof(char));
-    ucfg.nickservPassword = (char *)calloc(MAXLENGTH, sizeof(char));
+    char *checkCfgParameter = calloc(MAXLENGTH, sizeof(char));
+    user_config ucfg;
+    ucfg.botNick = calloc(MAXLENGTH, sizeof(char));
+    ucfg.server = calloc(MAXLENGTH, sizeof(char));
+    ucfg.channel = calloc(MAXLENGTH, sizeof(char));
+    ucfg.nickservPassword = calloc(MAXLENGTH, sizeof(char));
 
     while (!feof(f)) {
         fscanf(f, "%" STRLENGTH(MAXLENGTH) "s", checkCfgParameter);
@@ -89,7 +62,7 @@ int main(int argc, char **argv) {
     /* connect to the IRC network */
     if (!irc_connect(ircs)) {
         fprintf(stderr, "Could not connect or logon. Maybe check config file? %s\n", argv[1]);
-        cleanupcfg();
+        cleanupcfg(ucfg);
         exit(EXIT_FAILURE);
     }
 
@@ -110,10 +83,16 @@ int main(int argc, char **argv) {
         if (r == 0) {
             continue;
         }
-        interpret_message(msg);
+        interpret_message(ircs, msg);
     }
 
-    cleanupcfg();
+    cleanupcfg(ucfg);
     irc_dispose(ircs);
     exit(EXIT_SUCCESS);
+}
+
+void cleanupcfg(user_config ucfg) {
+    free(ucfg.botNick);
+    free(ucfg.channel);
+    free(ucfg.server);
 }
