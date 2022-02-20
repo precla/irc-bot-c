@@ -47,6 +47,7 @@ int main(int argc, char **argv) {
 
     irc_set_server(ircs, ucfg.server, (uint16_t)ucfg.port);
     irc_set_nick(ircs, ucfg.botNick);
+    // TODO: this is server password not nickserv...
     irc_set_pass(ircs, ucfg.nickservPassword);
 
     if (ucfg.sslActivated == 'y') {
