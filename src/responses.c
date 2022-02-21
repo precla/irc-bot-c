@@ -149,30 +149,20 @@ char *grab_url_data(const char *url, const short specialDomain) {
 }
 
 char *find_title_tag(char *htmlData, const short specialDomain) {
-    char        *start;
-    char        *end;
-    char        *title;
+    char *start;
+    char *end;
+    char *title;
+    const char *titleTag = "<title>";
 
-    /* for the special-snowflake YouTube ... */
-    if (specialDomain == YOUTUBE){
-        /* title\":\"Mile Kekin - Takav par (Official Video)\",\"lengthSeconds\":\"235\",\"channelId
-         */
-        start = strstr(htmlData, "document.title = \"") + TITLE_TAG_YOUTUBE_LENGTH;
-        end = strstr(start, "\n") - 2;      // move back by 2, so it doesn't print ";\n"
-
-    } else {
-        const char *titleTag = "<title>";
-
-        if (search_pattern(htmlData, titleTag)) {
-            fprintf(stderr, "No title tag found");
-            return NULL;
-        }
-
-        start = strstr(htmlData, titleTag);
-        /* move by <title> tag length */
-        start = start + TITLE_TAG_LENGTH;
-        end = strstr(htmlData, "</title>");
+    if (search_pattern(htmlData, titleTag)) {
+        fprintf(stderr, "No title tag found");
+        return NULL;
     }
+
+    start = strstr(htmlData, titleTag);
+    /* move by <title> tag length */
+    start = start + TITLE_TAG_LENGTH;
+    end = strstr(htmlData, "</title>");
 
     /* Fix if there are whitespace characters at the start of the title */
     while (start < end && isspace(*start)) {
@@ -181,54 +171,57 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
 
     /*
      * max length of title will be:
-     * 6 + 256 + 36
+     * 6 + MAXLENGTH + 36
      * in case it checks for yt links
      * all others will be shorter
      */
-    title = calloc(512, sizeof(char));
+    title = calloc(MAXLENGTH * 2, sizeof(char));
     strncat(title, "URL: ", 6);
-    strncat(title, start, (size_t)(end - start) % 256);
+    strncat(title, start, (end - start) % MAXLENGTH);
 
     /*
      * see 'enum special_domains' to check what index
      * stands for what url in 'matchedUrlIndex'
      */
     if (specialDomain == YOUTUBE) {
-        start = strstr(htmlData,
-                    "LIKE\"},\"defaultText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"");
+        start = strstr(start, "like this video along with ");
+        if (start != NULL) {
+            end = strstr(start, " other");
+        }
         if (start && end){
-            start = start + LIKE_LENGTH;
-            end = strstr(start, " ");
-
             char *likes = calloc(14, sizeof(char));
-            if (likes == NULL){
-                return title;
-            }
-            strncat(likes, start, end - start);
-            strncat(likes, " likes / ", 10);
+            if (likes != NULL){
+                strncat(likes, start, end - start);
+                strncat(likes, " likes / ", 10);
 
-            /*
-             * start searching from previous 'start' - no need to go trough the whole htmlData
-             * since the 'dislike' data comes after the 'like' data
-             */
-            start = strstr(start,
-                        "DISLIKE\"},\"defaultText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"");
-            start = start + DISLIKE_LENGTH;
-            end = strstr(start, " ");
-        
-            char *dislikes = calloc(12, sizeof(char));
-            if (dislikes == NULL){
+                /*
+                * DISLIKES REMOVED FROM YOUTUBE 2022
+                * start searching from previous 'start' - no need to go trough the whole htmlData
+                * since the 'dislike' data comes after the 'like' data
+                * /
+                start = strstr(start,
+                            "DISLIKE\"},\"defaultText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"");
+                start = start + DISLIKE_LENGTH;
+                end = strstr(start, " ");
+
+                char *dislikes = calloc(12, sizeof(char));
+                if (dislikes == NULL){
+                    free(likes);
+                    return title;
+                }
+                strncat(dislikes, start, end - start);
+                strncat(dislikes, " dislikes", 11);
+
+                title = strncat(title, " | ", 4);
+                */
+                title = strncat(title, likes, YT_RATING_LENGTH);
+                /*
+                title = strncat(title, dislikes, YT_RATING_LENGTH);
+                free(dislikes);
+                */
+
                 free(likes);
-                return title;
             }
-            strncat(dislikes, start, end - start);
-            strncat(dislikes, " dislikes", 11);
-
-            title = strncat(title, " | ", 4);
-            title = strncat(title, likes, YT_RATING_LENGTH);
-            title = strncat(title, dislikes, YT_RATING_LENGTH);
-            free(dislikes);
-            free(likes);
         }
     } else if (specialDomain == IMDB) {
         if (strstr(htmlData, "notEnoughRatings")){
@@ -255,5 +248,6 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
         }
     }
 
+    fprintf(stdout, "Title: %s\n", title);
     return title;
 }

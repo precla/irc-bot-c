@@ -7,6 +7,9 @@
 void interpret_message(irc *ircs, tokarr msg) {
     char *response = NULL;
     if (!strcmp(msg[1], "PRIVMSG")) {
+
+        // TODO: PRIVMSG and chan/user to reply is repeating too much, simplify!
+
         if (!strcmp(msg[2], irc_mynick(ircs))) {
             private_message(ircs, msg);
         } else if (lsi_ut_ischan(ircs, msg[2])) {
@@ -18,14 +21,14 @@ void interpret_message(irc *ircs, tokarr msg) {
          * rfc2812 #3.3.2 Never send an automatic reply to a notice
          * hence no call to reply(), only do output the notice msg we received
          */
-        fprintf(stdout, notice_message(msg), "%s");
+        fprintf(stdout, "%s", notice_message(msg));
     }
     free(response);
 }
 
 void reply(irc *ircs, char *response) {
     if (response != NULL && !irc_printf(ircs, response)) {
-        fprintf(stderr, irc_lasterror(ircs), "%s");
+        fprintf(stderr, "%s", irc_lasterror(ircs));
         exit(EXIT_FAILURE);
     }
 }
@@ -41,12 +44,13 @@ char *channel_message(tokarr msg) {
 
     strcpy(response, "PRIVMSG ");
     strncat(response, msg[2], MAXLENGTH);
+    strncat(response, " ", 1);
 
     fprintf(stdout, "Checking if the following parameter triggers any function: %s\n" , msg[3]);
 
     if (!strncmp(msg[3], "!sysinfo", 9)) {
         struct sysinfo info;
-        char sysInfoMsg[MAXLENGTH * 2];
+        char sysInfoMsg[MAXLENGTH];
 
         fprintf(stdout, "match for !sysinfo... getting data ready *beep boop*\n");
 
@@ -94,7 +98,7 @@ char *channel_message(tokarr msg) {
             specialDomain = 1;
         }
 
-        response = grab_url_data(msg[3], specialDomain);
+        strncat(response, (grab_url_data(msg[3], specialDomain)), MAXLENGTH);
     }
     if (response) {
         fprintf(stderr, "\nTime to execute succesfully: %f seconds.\n", (clock() - startTime)/(double)CLOCKS_PER_SEC );
@@ -106,24 +110,29 @@ char *channel_message(tokarr msg) {
  * nickserv auth
  */
 char *notice_message(tokarr msg) {
-    char reply[MAXLENGTH * 2];
-
     if (strcasecmp(msg[2], "nickserv")) {
-        return NULL;
+        return "";
+    }
+
+    char *response;
+
+    if ((response = calloc(MAXLENGTH * 2, sizeof(char))) == NULL){
+        fprintf(stderr, "Error in malloc() for notice_message. Download more ram?\n");
+        return "";
     }
 
     if (!strcasecmp(msg[3], "This nick is not registered")) {
         // sprintf(buf, "REGISTER %s NOMAIL", ucfg.nickservPassword);
-        strncpy(reply, "nickserv", MAXLENGTH * 2);
+        strncpy(response, "nickserv", MAXLENGTH * 2);
     } else if (!strcasecmp(msg[3], "This nickname is registered and protected")) {
         // sprintf(buf, "IDENTIFY %s", ucfg.nickservPassword);
-        strncpy(reply, "NICKSERV IDENTIFY", MAXLENGTH * 2);
-        strncat(reply, reply, MAXLENGTH * 2); /* ucfg.nickservPassword */
+        strncpy(response, "NICKSERV IDENTIFY", MAXLENGTH * 2);
+        // strncat(response, response, MAXLENGTH * 2); /* ucfg.nickservPassword */
     } else if (!strcasecmp(msg[3], "Password accepted - you are now recognized")) {
         fprintf(stdout, "Nickserv authentication succeed.");
     }
 
-    return NULL;
+    return response;
 }
 
 void private_message(irc *ircs, tokarr msg) {
