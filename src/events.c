@@ -32,27 +32,33 @@ void reply(irc *ircs, char *response) {
 
 char *channel_message(tokarr msg) {
     clock_t startTime = clock();
-    char *responseMsg;
+    char *response;
 
-    if ((responseMsg = calloc(MAXLENGTH, sizeof(char))) == NULL){
+    if ((response = calloc(MAXLENGTH * 2, sizeof(char))) == NULL){
         fprintf(stderr, "Error in malloc() for responseMsg. Download more ram?\n");
         return NULL;
     }
 
+    strcpy(response, "PRIVMSG ");
+    strncat(response, msg[2], MAXLENGTH);
+
     fprintf(stdout, "Checking if the following parameter triggers any function: %s\n" , msg[3]);
 
     if (!strncmp(msg[3], "!sysinfo", 9)) {
-        fprintf(stdout, "match for !sysinfo... getting data ready *beep boop*\n");
         struct sysinfo info;
+        char sysInfoMsg[MAXLENGTH * 2];
+
+        fprintf(stdout, "match for !sysinfo... getting data ready *beep boop*\n");
 
         if (!sysinfo(&info)) {
-            int ret = snprintf(responseMsg, MAXLENGTH,
-                                "Uptime: %ld h %ld m %ld s, RAM: %lu / %lu MB (used/total)",
+            int ret = snprintf(sysInfoMsg, MAXLENGTH,
+                                " Uptime: %ld d %ld h %ld m %ld s, RAM: %lu / %lu MB (used/total)",
+                                (info.uptime / 3600) / 24,                      // uptime days
                                 info.uptime / 3600,                             // uptime hrs
                                 (info.uptime % 3600) / 60,                      // uptime min
                                 info.uptime % 60,                               // uptime sec
-                                (info.totalram - info.freeram) / (1024*1024),   // get in MB
-                                info.totalram / (1024*1024));                   // get in MB
+                                (info.totalram - info.freeram) / (1024*1024),   // used in MB
+                                info.totalram / (1024*1024));                   // total in MB
 
             if (ret < 0 || ret > MAXLENGTH){
                 fprintf(stderr, "Error in snprintf for sysinfo: %d\n", ret);
@@ -60,6 +66,7 @@ char *channel_message(tokarr msg) {
         } else {
             fprintf(stderr, "Error in sysinfo() call, errno: %d\n", errno);
         }
+        strncat(response, sysInfoMsg, MAXLENGTH);
     } else if (msg[3]) {
         if (check_message_for_url(msg[3])) {
             return NULL;
@@ -87,12 +94,12 @@ char *channel_message(tokarr msg) {
             specialDomain = 1;
         }
 
-        responseMsg = grab_url_data(msg[3], specialDomain);
+        response = grab_url_data(msg[3], specialDomain);
     }
-    if (responseMsg) {
+    if (response) {
         fprintf(stderr, "\nTime to execute succesfully: %f seconds.\n", (clock() - startTime)/(double)CLOCKS_PER_SEC );
     }
-    return responseMsg;
+    return response;
 }
 
 /*
@@ -101,19 +108,18 @@ char *channel_message(tokarr msg) {
 char *notice_message(tokarr msg) {
     char reply[MAXLENGTH * 2];
 
-    // TODO: strcasecmp / strcmpi / stricmp?
-    if (strcmp(msg[2], "nickserv")) {
+    if (strcasecmp(msg[2], "nickserv")) {
         return NULL;
     }
 
-    if (strstr(msg[2], "This nick is not registered") == msg[2]) {
+    if (!strcasecmp(msg[3], "This nick is not registered")) {
         // sprintf(buf, "REGISTER %s NOMAIL", ucfg.nickservPassword);
         strncpy(reply, "nickserv", MAXLENGTH * 2);
-    } else if (strstr(msg[2], "This nickname is registered and protected") == msg[2]) {
+    } else if (!strcasecmp(msg[3], "This nickname is registered and protected")) {
         // sprintf(buf, "IDENTIFY %s", ucfg.nickservPassword);
         strncpy(reply, "NICKSERV IDENTIFY", MAXLENGTH * 2);
-        strncat(reply " %s", ucfg.nickservPassword);
-    } else if (strstr(msg[2], "Password accepted - you are now recognized") == msg[2]) {
+        strncat(reply, reply, MAXLENGTH * 2); /* ucfg.nickservPassword */
+    } else if (!strcasecmp(msg[3], "Password accepted - you are now recognized")) {
         fprintf(stdout, "Nickserv authentication succeed.");
     }
 
@@ -121,13 +127,8 @@ char *notice_message(tokarr msg) {
 }
 
 void private_message(irc *ircs, tokarr msg) {
-    char *response = calloc(MAXLENGTH, sizeof(char));
-    char *nickToReply = calloc(MAXLENGTH, sizeof(char));
-
-    if (!(response || nickToReply)) {
-        fprintf(stdout, "error in calloc within private_message\n");
-        return;
-    }
+    char response[MAXLENGTH];
+    char nickToReply[MAXLENGTH];
 
     lsi_ut_ident2nick(nickToReply, MAXLENGTH - 1, msg[0]);
 
@@ -141,8 +142,8 @@ void private_message(irc *ircs, tokarr msg) {
          * helpText - use one space as the first char of string
          */
         char *replyTextStartPos = strstr(response, nickToReply) + strlen(nickToReply);
-        char *helpText[HELPTEXTLINES] = {" !sysinfo\n",
-                                        " the end.\n"};
+        char helpText[HELPTEXTLINES][MAXLENGTH] = { " !sysinfo\n",
+                                                    " the end.\n" };
 
         for (unsigned int i = 0; i < HELPTEXTLINES; ++i) {
             memcpy(replyTextStartPos, helpText[i], strlen(helpText[i]));
@@ -152,8 +153,5 @@ void private_message(irc *ircs, tokarr msg) {
         strncat(response, " !h for help", 13);
         reply(ircs, response);
     }
-
-    free(response);
-    free(nickToReply);
     return;
 }
