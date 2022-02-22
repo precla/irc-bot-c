@@ -1,4 +1,18 @@
-#include "responses.h"
+#include <ctype.h>
+#include <errno.h>
+#include <regex.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/types.h>
+#include <time.h>
+
+/* libcurl - curl.haxx.se/libcurl/ */
+#include <curl/curl.h>
+
+#include "url_magic.h"
 
 /* Max amount of matches with regexec()*/
 #define MAX_MATCHED                 1
@@ -6,21 +20,12 @@
 /* TITLE_TAG_LENGTH -> length of the "<title>" tag */
 #define TITLE_TAG_LENGTH            7
 
-/* TITLE_TAG_LENGTH -> length of "title\":\"" */
-#define TITLE_TAG_YOUTUBE_LENGTH    18
-
 /* max characters for likes/dislikes to append */
-#define YT_RATING_LENGTH            16
-
-/* Length of text that comes before the like rating */
-#define LIKE_LENGTH                 69
-
-/* Length of text that comes before the dislike rating */
-#define DISLIKE_LENGTH              72
+#define YT_RATING_LENGTH            32
 
 /* Length of rating tag + rating -> '"ratingValue": "7.7"'*/
-#define RATING_LENGTH_START         16
-#define RATING_LENGTH_END           19
+#define IMDB_RATING_LENGTH_START    16
+#define IMDB_RATING_LENGTH_END      19
 
 struct MemoryStruct {
     char    *memory;
@@ -114,16 +119,17 @@ char *grab_url_data(const char *url, const short specialDomain) {
         struct MemoryStruct response;
 
         response.memory = malloc(1);
+        if (response.memory == NULL) {
+            return NULL;
+        }
         response.size = 0;
-
-        // init_string_s(&response);
 
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_response);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0");
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0");
 
         res = curl_easy_perform(curl);
 
@@ -189,7 +195,7 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
             end = strstr(start, " other");
         }
         if (start && end){
-            char *likes = calloc(14, sizeof(char));
+            char *likes = calloc(MAXLENGTH, sizeof(char));
             if (likes != NULL){
                 strncat(likes, start, end - start);
                 strncat(likes, " likes / ", 10);
@@ -230,8 +236,8 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
             return title;
         }
 
-        start = strstr(htmlData, "\"ratingValue\": \"") + RATING_LENGTH_START;
-        end = start + RATING_LENGTH_END;
+        start = strstr(htmlData, "\"ratingValue\": \"") + IMDB_RATING_LENGTH_START;
+        end = start + IMDB_RATING_LENGTH_END;
 
         if (start && end){
             char *rating = calloc(4, sizeof(char));

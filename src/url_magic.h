@@ -1,6 +1,6 @@
 #pragma once
 
-#include "irc-bot-c.h"
+#include "types.h"
 
 /*
  * special domains with extendend featuers

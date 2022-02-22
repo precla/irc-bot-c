@@ -1,4 +1,16 @@
-#include "events.h"
+#include <ctype.h>
+#include <errno.h>
+#include <regex.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/sysinfo.h>
+#include <sys/types.h>
+#include <time.h>
+
+#include "messages.h"
 
 /*
  * Check what kind of message was received.
@@ -38,13 +50,13 @@ char *channel_message(tokarr msg) {
     char *response;
 
     if ((response = calloc(MAXLENGTH * 2, sizeof(char))) == NULL){
-        fprintf(stderr, "Error in malloc() for responseMsg. Download more ram?\n");
+        fprintf(stderr, "Error in calloc() for responseMsg.\n");
         return NULL;
     }
 
     strcpy(response, "PRIVMSG ");
     strncat(response, msg[2], MAXLENGTH);
-    strncat(response, " ", 1);
+    strncat(response, " ", 2);
 
     fprintf(stdout, "Checking if the following parameter triggers any function: %s\n" , msg[3]);
 
@@ -107,21 +119,22 @@ char *channel_message(tokarr msg) {
 }
 
 /*
- * nickserv auth
+ * nickserv auth is within notice
  */
 char *notice_message(tokarr msg) {
     if (strcasecmp(msg[2], "nickserv")) {
-        return "";
+        return "Not a Nickserv notice\n";
     }
 
     char *response;
 
     if ((response = calloc(MAXLENGTH * 2, sizeof(char))) == NULL){
-        fprintf(stderr, "Error in malloc() for notice_message. Download more ram?\n");
+        fprintf(stderr, "Error in calloc() for notice_message.\n");
         return "";
     }
 
-    if (!strcasecmp(msg[3], "This nick is not registered")) {
+    if (!strcasecmp(msg[3], "This nick is not registered") ||
+        !strcasecmp(msg[3], "Your nickname is not registered")) {
         // sprintf(buf, "REGISTER %s NOMAIL", ucfg.nickservPassword);
         strncpy(response, "nickserv", MAXLENGTH * 2);
     } else if (!strcasecmp(msg[3], "This nickname is registered and protected")) {
@@ -132,6 +145,7 @@ char *notice_message(tokarr msg) {
         fprintf(stdout, "Nickserv authentication succeed.");
     }
 
+    fprintf(stdout, "%s\n", msg[3]);
     return response;
 }
 

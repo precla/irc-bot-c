@@ -1,6 +1,7 @@
 #pragma once
 
-#include "irc-bot-c.h"
+#include "url_magic.h"
+#include "types.h"
 
 void interpret_message(irc *ircs, tokarr msg);
 void reply(irc *ircs, char *response);
