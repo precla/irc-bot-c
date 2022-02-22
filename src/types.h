@@ -11,13 +11,14 @@
 #define STRLENGTHVAL(x) #x
 
 typedef struct {
-    char            *botNick,
-                    *botUname,
-                    *botFname,
+    char            *nick,
+                    *uname,
+                    *fname,
+                    *email,
                     *server,
                     *channel,
-                    *serverPassword,
-                    *nickservPassword;
+                    *serverPwd,
+                    *nickservPwd;
     unsigned short  port;
-    char            sslActivated;
+    char            sslActive;
 } user_config;

@@ -17,7 +17,6 @@
  * For example: private message, message in the active channel, ircd message, ...
  */
 void interpret_message(irc *ircs, tokarr msg) {
-    char *response = NULL;
     if (!strcmp(msg[1], "PRIVMSG")) {
 
         // TODO: PRIVMSG and chan/user to reply is repeating too much, simplify!
@@ -25,8 +24,7 @@ void interpret_message(irc *ircs, tokarr msg) {
         if (!strcmp(msg[2], irc_mynick(ircs))) {
             private_message(ircs, msg);
         } else if (lsi_ut_ischan(ircs, msg[2])) {
-            response = channel_message(msg);
-            reply(ircs, response);
+            reply(ircs, channel_message(msg));
         }
     } else if (!strcmp(msg[1], "NOTICE")) {
         /*
@@ -35,7 +33,6 @@ void interpret_message(irc *ircs, tokarr msg) {
          */
         fprintf(stdout, "%s", notice_message(msg));
     }
-    free(response);
 }
 
 void reply(irc *ircs, char *response) {
@@ -122,7 +119,8 @@ char *channel_message(tokarr msg) {
  * nickserv auth is within notice
  */
 char *notice_message(tokarr msg) {
-    if (strcasecmp(msg[2], "nickserv")) {
+    if (strcasecmp(msg[2], "nickserv") && !strcasecmp(msg[2], "own NICK")) {
+        fprintf(stdout, "Received notice from %s, content: %s\n", msg[2], msg[3]);
         return "Not a Nickserv notice\n";
     }
 
@@ -132,15 +130,17 @@ char *notice_message(tokarr msg) {
         fprintf(stderr, "Error in calloc() for notice_message.\n");
         return "";
     }
+    strcpy(response, "PRIVMSG NickServ ");
+
 
     if (!strcasecmp(msg[3], "This nick is not registered") ||
         !strcasecmp(msg[3], "Your nickname is not registered")) {
-        // sprintf(buf, "REGISTER %s NOMAIL", ucfg.nickservPassword);
-        strncpy(response, "nickserv", MAXLENGTH * 2);
+        strcat(response, " REGISTER ");
+        //strncat(response, ucfg.nickservPwd, MAXLENGTH);
+        strcat(response, " NOMAIL");
     } else if (!strcasecmp(msg[3], "This nickname is registered and protected")) {
-        // sprintf(buf, "IDENTIFY %s", ucfg.nickservPassword);
-        strncpy(response, "NICKSERV IDENTIFY", MAXLENGTH * 2);
-        // strncat(response, response, MAXLENGTH * 2); /* ucfg.nickservPassword */
+        strcat(response, " IDENTIFY");
+        // strncat(response, ucfg.nickservPwd, MAXLENGTH * 2);
     } else if (!strcasecmp(msg[3], "Password accepted - you are now recognized")) {
         fprintf(stdout, "Nickserv authentication succeed.");
     }

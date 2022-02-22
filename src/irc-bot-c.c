@@ -23,35 +23,38 @@ int main(int argc, char **argv) {
 
     char *checkCfgParameter = calloc(MAXLENGTH, sizeof(char));
     user_config ucfg;
-    ucfg.botNick = calloc(MAXLENGTH, sizeof(char));
-    ucfg.botUname = calloc(MAXLENGTH, sizeof(char));
-    ucfg.botFname = calloc(MAXLENGTH, sizeof(char));
+    ucfg.nick = calloc(MAXLENGTH, sizeof(char));
+    ucfg.uname = calloc(MAXLENGTH, sizeof(char));
+    ucfg.fname = calloc(MAXLENGTH, sizeof(char));
+    ucfg.email = calloc(MAXLENGTH, sizeof(char));
     ucfg.server = calloc(MAXLENGTH, sizeof(char));
-    ucfg.serverPassword = calloc(MAXLENGTH, sizeof(char));
+    ucfg.serverPwd = calloc(MAXLENGTH, sizeof(char));
     ucfg.channel = calloc(MAXLENGTH, sizeof(char));
-    ucfg.nickservPassword = calloc(MAXLENGTH, sizeof(char));
+    ucfg.nickservPwd = calloc(MAXLENGTH, sizeof(char));
 
     while (!feof(f)) {
         fscanf(f, "%" STRLENGTH(MAXLENGTH) "s", checkCfgParameter);
 
         if (!strcmp(checkCfgParameter, "bot_nick")) {
-            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.botNick);
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.nick);
         } else if (!strcmp(checkCfgParameter, "bot_uname")) {
-            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.botUname);
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.uname);
         } else if (!strcmp(checkCfgParameter, "bot_fname")) {
-            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.botFname);
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.fname);
+        } else if (!strcmp(checkCfgParameter, "bot_email")) {
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.email);
         } else if (!strcmp(checkCfgParameter, "server")) {
             fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.server);
         } else if (!strcmp(checkCfgParameter, "server_password")) {
-            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.serverPassword);
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.serverPwd);
         } else if (!strcmp(checkCfgParameter, "port")) {
             fscanf(f, " %hu", &ucfg.port);
         } else if (!strcmp(checkCfgParameter, "ssl")) {
-            fscanf(f, " %c", &ucfg.sslActivated);
+            fscanf(f, " %c", &ucfg.sslActive);
         } else if (!strcmp(checkCfgParameter, "channel")) {
             fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.channel);
         } else if (!strcmp(checkCfgParameter, "nickserv_auth")) {
-            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.nickservPassword);
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.nickservPwd);
         }
     }
 
@@ -59,18 +62,18 @@ int main(int argc, char **argv) {
     free(checkCfgParameter);
     fclose(f);
 
-    irc_set_nick(ircs, ucfg.botNick);
-    irc_set_uname(ircs, ucfg.botUname);
-    irc_set_fname(ircs, ucfg.botFname);
+    irc_set_nick(ircs, ucfg.nick);
+    irc_set_uname(ircs, ucfg.uname);
+    irc_set_fname(ircs, ucfg.fname);
     irc_set_server(ircs, ucfg.server, (uint16_t)ucfg.port);
-    irc_set_pass(ircs, ucfg.serverPassword);
+    irc_set_pass(ircs, ucfg.serverPwd);
 
-    if (ucfg.sslActivated == 'y') {
+    if (ucfg.sslActive == 'y') {
         irc_set_ssl(ircs, true);
     }
 
     fprintf(stdout, "bot nick: %s\nserver: %s\nport: %u\nchannel(s): %s\n",
-                    ucfg.botNick, ucfg.server, ucfg.port, ucfg.channel);
+                    ucfg.nick, ucfg.server, ucfg.port, ucfg.channel);
 
     /* connect to the IRC network */
     if (!irc_connect(ircs)) {
@@ -105,11 +108,12 @@ int main(int argc, char **argv) {
 }
 
 void cleanupcfg(user_config ucfg) {
-    free(ucfg.botNick);
-    free(ucfg.botUname);
-    free(ucfg.botFname);
+    free(ucfg.nick);
+    free(ucfg.uname);
+    free(ucfg.fname);
+    free(ucfg.email);
     free(ucfg.channel);
     free(ucfg.server);
-    free(ucfg.serverPassword);
-    free(ucfg.nickservPassword);
+    free(ucfg.serverPwd);
+    free(ucfg.nickservPwd);
 }
