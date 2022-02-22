@@ -20,7 +20,10 @@ int main(int argc, char **argv) {
     char *checkCfgParameter = calloc(MAXLENGTH, sizeof(char));
     user_config ucfg;
     ucfg.botNick = calloc(MAXLENGTH, sizeof(char));
+    ucfg.botUname = calloc(MAXLENGTH, sizeof(char));
+    ucfg.botFname = calloc(MAXLENGTH, sizeof(char));
     ucfg.server = calloc(MAXLENGTH, sizeof(char));
+    ucfg.serverPassword = calloc(MAXLENGTH, sizeof(char));
     ucfg.channel = calloc(MAXLENGTH, sizeof(char));
     ucfg.nickservPassword = calloc(MAXLENGTH, sizeof(char));
 
@@ -29,8 +32,14 @@ int main(int argc, char **argv) {
 
         if (!strcmp(checkCfgParameter, "bot_nick")) {
             fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.botNick);
+        } else if (!strcmp(checkCfgParameter, "bot_uname")) {
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.botUname);
+        } else if (!strcmp(checkCfgParameter, "bot_fname")) {
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.botFname);
         } else if (!strcmp(checkCfgParameter, "server")) {
             fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.server);
+        } else if (!strcmp(checkCfgParameter, "server_password")) {
+            fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.serverPassword);
         } else if (!strcmp(checkCfgParameter, "port")) {
             fscanf(f, " %hu", &ucfg.port);
         } else if (!strcmp(checkCfgParameter, "ssl")) {
@@ -41,23 +50,22 @@ int main(int argc, char **argv) {
             fscanf(f, " %" STRLENGTH(MAXLENGTH) "s", ucfg.nickservPassword);
         }
     }
+
     /* clear cfg stuff, especially to not have the password in memory */
     free(checkCfgParameter);
     fclose(f);
 
-    irc_set_server(ircs, ucfg.server, (uint16_t)ucfg.port);
     irc_set_nick(ircs, ucfg.botNick);
-    // TODO: this is server password not nickserv...
-    irc_set_pass(ircs, ucfg.nickservPassword);
+    irc_set_uname(ircs, ucfg.botUname);
+    irc_set_fname(ircs, ucfg.botFname);
+    irc_set_server(ircs, ucfg.server, (uint16_t)ucfg.port);
+    irc_set_pass(ircs, ucfg.serverPassword);
 
     if (ucfg.sslActivated == 'y') {
         irc_set_ssl(ircs, true);
     }
 
-    /* clear the password from memory */
-    free(ucfg.nickservPassword);
-
-    fprintf(stdout, "bot nick: %s\nserver: %s\nport: %u\nchannel(s): %s\nnickserv auth: ***\n",
+    fprintf(stdout, "bot nick: %s\nserver: %s\nport: %u\nchannel(s): %s\n",
                     ucfg.botNick, ucfg.server, ucfg.port, ucfg.channel);
 
     /* connect to the IRC network */
@@ -94,6 +102,10 @@ int main(int argc, char **argv) {
 
 void cleanupcfg(user_config ucfg) {
     free(ucfg.botNick);
+    free(ucfg.botUname);
+    free(ucfg.botFname);
     free(ucfg.channel);
     free(ucfg.server);
+    free(ucfg.serverPassword);
+    free(ucfg.nickservPassword);
 }

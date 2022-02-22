@@ -30,8 +30,11 @@
 
 typedef struct {
     char            *botNick,
+                    *botUname,
+                    *botFname,
                     *server,
                     *channel,
+                    *serverPassword,
                     *nickservPassword;
     unsigned short  port;
     char            sslActivated;
