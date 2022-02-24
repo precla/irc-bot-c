@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
         if (r == 0) {
             continue;
         }
-        interpret_message(ircs, msg);
+        interpret_message(ircs, msg, &ucfg);
     }
 
     cleanupcfg(ucfg);

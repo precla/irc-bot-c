@@ -16,7 +16,7 @@
  * Check what kind of message was received.
  * For example: private message, message in the active channel, ircd message, ...
  */
-void interpret_message(irc *ircs, tokarr msg) {
+void interpret_message(irc *ircs, tokarr msg, user_config *ucfg) {
     if (!strcmp(msg[1], "PRIVMSG")) {
 
         // TODO: PRIVMSG and chan/user to reply is repeating too much, simplify!
@@ -31,7 +31,7 @@ void interpret_message(irc *ircs, tokarr msg) {
          * rfc2812 #3.3.2 Never send an automatic reply to a notice
          * hence no call to reply(), only do output the notice msg we received
          */
-        fprintf(stdout, "%s", notice_message(msg));
+        reply(ircs, notice_message(msg, ucfg));
     }
 }
 
@@ -40,6 +40,7 @@ void reply(irc *ircs, char *response) {
         fprintf(stderr, "%s", irc_lasterror(ircs));
         exit(EXIT_FAILURE);
     }
+    free(response);
 }
 
 char *channel_message(tokarr msg) {
@@ -116,41 +117,49 @@ char *channel_message(tokarr msg) {
 }
 
 /*
- * nickserv auth is within notice
+ * NickServ auth is within notice
  */
-char *notice_message(tokarr msg) {
-    if (strcasecmp(msg[2], "nickserv") && !strcasecmp(msg[2], "own NICK")) {
+char *notice_message(tokarr msg, user_config *ucfg) {
+    if (strcasecmp(msg[2], ucfg->nick)) {
         fprintf(stdout, "Received notice from %s, content: %s\n", msg[2], msg[3]);
-        return "Not a Nickserv notice\n";
+        return NULL;
     }
 
-    char *response;
+    fprintf(stdout, "Received notice: %s\n", msg[3]);
 
-    if ((response = calloc(MAXLENGTH * 2, sizeof(char))) == NULL){
-        fprintf(stderr, "Error in calloc() for notice_message.\n");
-        return "";
+    char *response = calloc(MAXLENGTH * 4, sizeof(char));
+    if (response == NULL) {
+        return NULL;
     }
-    strcpy(response, "PRIVMSG NickServ ");
 
-
-    if (!strcasecmp(msg[3], "This nick is not registered") ||
-        !strcasecmp(msg[3], "Your nickname is not registered")) {
-        strcat(response, " REGISTER ");
-        //strncat(response, ucfg.nickservPwd, MAXLENGTH);
-        strcat(response, " NOMAIL");
-    } else if (!strcasecmp(msg[3], "This nickname is registered and protected")) {
-        strcat(response, " IDENTIFY");
-        // strncat(response, ucfg.nickservPwd, MAXLENGTH * 2);
-    } else if (!strcasecmp(msg[3], "Password accepted - you are now recognized")) {
+    if (!strncasecmp(msg[3], "This nick is not registered", 27) ||
+        !strncasecmp(msg[3], "Your nickname is not registered", 31)) {
+        strcpy(response, "PRIVMSG NickServ REGISTER ");
+        strncat(response, ucfg->nickservPwd, MAXLENGTH);
+        strcat(response, " ");
+        strncat(response, ucfg->email, MAXLENGTH);
+    } else if (!strncasecmp(msg[3], "This nickname is registered and protected", 41)) {
+        strcpy(response, "PRIVMSG NickServ IDENTIFY ");
+        strncat(response, ucfg->nickservPwd, MAXLENGTH);
+    } else if (!strncasecmp(msg[3], "Password accepted - you are now recognized", 42)) {
         fprintf(stdout, "Nickserv authentication succeed.");
     }
 
-    fprintf(stdout, "%s\n", msg[3]);
-    return response;
+    if (strlen(response) > 18) {
+        fprintf(stdout, "Sending notice message: %s\n", response);
+        return response;
+    }
+
+    free(response);
+    return NULL;
 }
 
 void private_message(irc *ircs, tokarr msg) {
-    char response[MAXLENGTH];
+    char *response = calloc(MAXLENGTH * 4, sizeof(char));
+    if (response == NULL) {
+        return;
+    }
+
     char nickToReply[MAXLENGTH];
 
     lsi_ut_ident2nick(nickToReply, MAXLENGTH - 1, msg[0]);
