@@ -17,12 +17,6 @@
 /* Max amount of matches with regexec()*/
 #define MAX_MATCHED                 1
 
-/* TITLE_TAG_LENGTH -> length of the "<title>" tag */
-#define TITLE_TAG_LENGTH            7
-
-/* max characters for likes/dislikes to append */
-#define YT_RATING_LENGTH            32
-
 /* Length of rating tag + rating -> '"ratingValue": "7.7"'*/
 #define IMDB_RATING_LENGTH_START    16
 #define IMDB_RATING_LENGTH_END      19
@@ -167,7 +161,7 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
 
     start = strstr(htmlData, titleTag);
     /* move by <title> tag length */
-    start = start + TITLE_TAG_LENGTH;
+    start = start + strlen(titleTag);
     end = strstr(htmlData, "</title>");
 
     /* Fix if there are whitespace characters at the start of the title */
@@ -177,28 +171,34 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
 
     /*
      * max length of title will be:
-     * 6 + MAXLENGTH + 36
+     * (MAXLENGTH * 2) + 6
      * in case it checks for yt links
      * all others will be shorter
      */
     title = calloc(MAXLENGTH * 2, sizeof(char));
     strncat(title, "URL: ", 6);
-    strncat(title, start, (end - start) % MAXLENGTH);
+    strncat(title, start, (end - start) % (MAXLENGTH * 2));
 
     /*
      * see 'enum special_domains' to check what index
      * stands for what url in 'matchedUrlIndex'
      */
     if (specialDomain == YOUTUBE) {
-        start = strstr(start, "like this video along with ");
+        // TODO: get view count
+
+        // get likes count
+        start = strstr(start, "LIKE\"},\"defaultText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"");
         if (start != NULL) {
-            end = strstr(start, " other");
+            // move to the end of the above searched string
+            start += 69;
+            end = strstr(start, " likes");
         }
         if (start && end){
             char *likes = calloc(MAXLENGTH, sizeof(char));
             if (likes != NULL){
-                strncat(likes, start, end - start);
-                strncat(likes, " likes / ", 10);
+                strcat(likes, " | ");
+                strncat(likes, start, (end - start) % MAXLENGTH);
+                strncat(likes, " likes", 7);
 
                 /*
                 * DISLIKES REMOVED FROM YOUTUBE 2022
@@ -218,11 +218,11 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
                 strncat(dislikes, start, end - start);
                 strncat(dislikes, " dislikes", 11);
 
-                title = strncat(title, " | ", 4);
+                strncat(title, " | ", 4);
                 */
-                title = strncat(title, likes, YT_RATING_LENGTH);
+                strncat(title, likes, MAXLENGTH);
                 /*
-                title = strncat(title, dislikes, YT_RATING_LENGTH);
+                strncat(title, dislikes, YT_RATING_LENGTH);
                 free(dislikes);
                 */
 
