@@ -10,8 +10,8 @@ irc-bot-c is a simple IRC bot with basic functionalities, same as my irc-bot-nod
 
 ### Done:
 - grab title from posted URL in irc channel
-- youtube links: get likes & dislikes
-- imdb links: get rating
+- youtube links: get likes & view count
+- imdb links: get rating & amount of votes
 - Nickserv authentication
 - support for config file
 
