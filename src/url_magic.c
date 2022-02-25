@@ -17,10 +17,6 @@
 /* Max amount of matches with regexec()*/
 #define MAX_MATCHED                 1
 
-/* Length of rating tag + rating -> '"ratingValue": "7.7"'*/
-#define IMDB_RATING_LENGTH_START    16
-#define IMDB_RATING_LENGTH_END      19
-
 struct MemoryStruct {
     char    *memory;
     size_t  size;
@@ -194,7 +190,7 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
                 if (views != NULL) {
                     strcpy(views, " | ");
                     strncat(views, start, (end - start) % 32);
-                    strncat(views, " views", 7);
+                    strcat(views, " views");
                     strncat(title, views, 64);
 
                     free(views);
@@ -213,7 +209,7 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
                 if (likes != NULL){
                     strcpy(likes, " | ");
                     strncat(likes, start, (end - start) % MAXLENGTH);
-                    strncat(likes, " likes", 7);
+                    strcat(likes, " likes");
 
                     /*
                     * DISLIKES REMOVED FROM YOUTUBE 2022
@@ -246,27 +242,40 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
             }
         }
     } else if (specialDomain == IMDB) {
-        if (strstr(htmlData, "notEnoughRatings")){
-            /* 13 - length of " - no rating" */
-            strncat(title, " - no rating", 13);
-            return title;
-        }
+        char *rating = calloc(MAXLENGTH, sizeof(char));
+        if (rating != NULL){
+            start = strstr(htmlData, "ratingCount");
 
-        start = strstr(htmlData, "\"ratingValue\": \"") + IMDB_RATING_LENGTH_START;
-        end = start + IMDB_RATING_LENGTH_END;
+            if (start == NULL) {
+                strncat(title, " - no rating", 13);
+            } else {
+                start = strstr(htmlData, "ratingCount\":");
 
-        if (start && end){
-            char *rating = calloc(4, sizeof(char));
-            if (rating == NULL){
-                return title;
+                if (start) {
+                    start += 13;
+                    end = strstr(start, ",\"");
+
+                    if (end) {
+                        strcpy(rating, " | votes: ");
+                        strncat(rating, start, (end - start));
+                    }
+
+                    // continue from previous end
+                    start = strstr(end, "ratingValue\":") + 13;
+                    if (start) {
+                        end = strstr(start, "}");
+
+                        if (end){
+                            strcat(rating, " | rating: ");
+                            strncat(rating, start, (end - start) % 4);
+                            strncat(title, rating, MAXLENGTH);
+                            strcat(title, "/10");
+
+                            free(rating);
+                        }
+                    }
+                }
             }
-            strncat(rating, start, (size_t)(end - start) % 4);
-
-            strncat(title, " - ", 4);
-            strncat(title, rating, 4);
-            strncat(title, "/10", 4);
-
-            free(rating);
         }
     }
 
