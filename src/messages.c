@@ -77,12 +77,13 @@ char *channel_message(tokarr msg) {
             if (ret < 0 || ret > MAXLENGTH){
                 fprintf(stderr, "Error in snprintf for sysinfo: %d\n", ret);
             }
+            strncat(response, sysInfoMsg, MAXLENGTH);
         } else {
             fprintf(stderr, "Error in sysinfo() call, errno: %d\n", errno);
         }
-        strncat(response, sysInfoMsg, MAXLENGTH);
     } else if (msg[3]) {
         if (check_message_for_url(msg[3])) {
+            free(response);
             return NULL;
         }
 
