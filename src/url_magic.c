@@ -184,49 +184,65 @@ char *find_title_tag(char *htmlData, const short specialDomain) {
      * stands for what url in 'matchedUrlIndex'
      */
     if (specialDomain == YOUTUBE) {
-        // TODO: get view count
+        // get view count
+        start = strstr(start, "interactionCount\" content=\"");
+        if (start != NULL) {
+            start += 27;
+            end = strstr(start, "\">");
+            if (end) {
+                char *views = calloc(64, sizeof(char));
+                if (views != NULL) {
+                    strcpy(views, " | ");
+                    strncat(views, start, (end - start) % 32);
+                    strncat(views, " views", 7);
+                    strncat(title, views, 64);
 
-        // get likes count
-        start = strstr(start, "LIKE\"},\"defaultText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"");
+                    free(views);
+                }
+            }
+        }
+
+        // get likes count, use previous end to not search trough all of the data
+        start = strstr(end, "LIKE\"},\"defaultText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"");
         if (start != NULL) {
             // move to the end of the above searched string
             start += 69;
             end = strstr(start, " likes");
-        }
-        if (start && end){
-            char *likes = calloc(MAXLENGTH, sizeof(char));
-            if (likes != NULL){
-                strcat(likes, " | ");
-                strncat(likes, start, (end - start) % MAXLENGTH);
-                strncat(likes, " likes", 7);
+            if (end){
+                char *likes = calloc(MAXLENGTH, sizeof(char));
+                if (likes != NULL){
+                    strcpy(likes, " | ");
+                    strncat(likes, start, (end - start) % MAXLENGTH);
+                    strncat(likes, " likes", 7);
 
-                /*
-                * DISLIKES REMOVED FROM YOUTUBE 2022
-                * start searching from previous 'start' - no need to go trough the whole htmlData
-                * since the 'dislike' data comes after the 'like' data
-                * /
-                start = strstr(start,
-                            "DISLIKE\"},\"defaultText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"");
-                start = start + DISLIKE_LENGTH;
-                end = strstr(start, " ");
+                    /*
+                    * DISLIKES REMOVED FROM YOUTUBE 2022
+                    * start searching from previous 'start' - no need to go trough the whole htmlData
+                    * since the 'dislike' data comes after the 'like' data
+                    * /
+                    start = strstr(start,
+                                "DISLIKE\"},\"defaultText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"");
+                    start = start + DISLIKE_LENGTH;
+                    end = strstr(start, " ");
 
-                char *dislikes = calloc(12, sizeof(char));
-                if (dislikes == NULL){
+                    char *dislikes = calloc(12, sizeof(char));
+                    if (dislikes == NULL){
+                        free(likes);
+                        return title;
+                    }
+                    strncat(dislikes, start, end - start);
+                    strncat(dislikes, " dislikes", 11);
+
+                    strncat(title, " | ", 4);
+                    */
+                    strncat(title, likes, MAXLENGTH);
+                    /*
+                    strncat(title, dislikes, YT_RATING_LENGTH);
+                    free(dislikes);
+                    */
+
                     free(likes);
-                    return title;
                 }
-                strncat(dislikes, start, end - start);
-                strncat(dislikes, " dislikes", 11);
-
-                strncat(title, " | ", 4);
-                */
-                strncat(title, likes, MAXLENGTH);
-                /*
-                strncat(title, dislikes, YT_RATING_LENGTH);
-                free(dislikes);
-                */
-
-                free(likes);
             }
         }
     } else if (specialDomain == IMDB) {
